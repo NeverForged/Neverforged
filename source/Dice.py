@@ -1,4 +1,5 @@
 import sys
+import math
 import random as rnd
 import matplotlib.pyplot as plt
 import matplotlib.image as image
@@ -13,7 +14,7 @@ class Roll(object):
         kept -> kept dice (if adv = "a" or "d", not the same as dice)
     '''
 
-    def __init__(self, dicecode="3d6", adv='', image=False):
+    def __init__(self, dicecode="3d6", adv='', image=False, fig=None, ax=None):
         '''
         Initialize the dice.
         '''
@@ -31,6 +32,11 @@ class Roll(object):
         self.MH = 0
         self.LMH = 0
         self.get_stats(adv)
+        if fig is None:
+            self.fig, self.ax = plt.subplots(1, figsize=(4, 3))
+        else:
+            self.fig = fig
+            self.ax = ax
 
     def __repr__(self):
         '''
@@ -145,20 +151,22 @@ class Roll(object):
             print(self.dice[n])
             print(self.dicesides[n])
 
-    def show(self):
+    def show(self, title=''):
         '''
         Plots a roll in Matplotlib...
         '''
+        fig = self.fig
+        ax = self.ax
         fig_loc_x = []
         fig_loc_y = []
-        fig = plt.figure(figsize=(4, 3))
+
         for i, die in enumerate(self.dice):
             im = image.imread('../images/dice/d' + str(self.dicesides[i]) +
                               '_' + str(self.dice[i]) + '.png')
             angle = 0
             if int(self.dicesides[i]) >= 5:
-                angle =  rnd.randint(0, 8)
-                imr = rotate(im, angle * 45)
+                angle =  rnd.randint(0, 7)
+                imr = rotate(im, angle * 45.0)
             else:
                 imr = im
             y = rnd.randint(1, 2) * 0.15 + 0.1
@@ -175,33 +183,38 @@ class Roll(object):
         xl = 1.4
         yl = 0.9
         def onclick(event):
-            for i in range(4):
+            for i in range(len(self.dice)):
                 if (event.xdata >= fig_loc_x[i][0] - 0.05 and
                     event.xdata <= fig_loc_x[i][1] + 0.05 and
                     event.ydata >= fig_loc_y[i][0] - 0.05 and
                     event.ydata <= fig_loc_y[i][1] + 0.05):
                    # we have a dice click event....
                    if int(self.dice[i]) == int(self.dicesides[i]):
-                       # plt.clf()
-                       plt.close()
+                       ax.cla()
+                       # plt.close()
                        self.explode(i)
-                       self.show()
+                       self.show(title)
                    else:
-                       # plt.clf()
-                       plt.close()
+                       ax.cla()
+                       # plt.close()
                        self.reroll(i)
-                       self.show()
-                elif event.xdata >= xl - 0.05 and event.ydata >= yl - 0.05:
+                       self.show(title)
+                elif (event.xdata >= xl - 0.05 and
+                      event.ydata >= yl - 0.05):
                     plt.close()
         cid = fig.canvas.mpl_connect('button_press_event', onclick)
-        plt.xlim(0, 1.6)
-        plt.ylim(0, 0.95)
-        plt.axis('off')
+        ax.set_xlim(0, 1.6)
+        ax.set_ylim(0, 0.95)
+        ax.axis('off')
         s = self.__repr__()
-        plt.text(0.05, 0, s)
-        plt.scatter(xl - 0.025, yl - 0.025, marker='s', alpha=0.5, color='r')
-        plt.scatter(xl - 0.025, yl - 0.025, marker='x', alpha=0.75, color='w')
-        plt.show()
+        ax.text(0.05, 0.05, s)
+        scatter = plt.scatter(xl - 0.025, yl - 0.025, marker='s',
+                              alpha=0.5, color='r')
+        ax.scatter(xl - 0.025, yl - 0.025, marker='x',
+                        alpha=0.75, color='w')
+        ax.format_coord = lambda x, y: ''
+        ax.set_title(title)
+        plt.draw()
 
 
 if __name__ == "__main__":
@@ -213,3 +226,4 @@ if __name__ == "__main__":
         adv = sys.argv[2]
     a_roll = Roll(dice, adv)
     a_roll.show()
+    plt.show()
