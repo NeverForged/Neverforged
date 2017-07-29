@@ -89,13 +89,13 @@ class Appearance(object):
                           21,  # left boot
                           22,  # shoulders
                           23,  # belt
+                          24, # gloves, assigns to 43&44
                           25,  # neck
                           26,  # waistcoat
                           27,  # coat
                           28,  # right arm
                           29,  # left arm
-                          30,  # right glove as 24
-                          31,  # left glove as 24
+                          30,  # belt, ovr
                           32,  # overcoat
                           37,  # helm
                           38,  # ring, rt
@@ -147,27 +147,35 @@ class Appearance(object):
 
         self.args = defaultdict(list)
 
-    def show_char(self):
+    def show(self):
         '''
         '''
+        implot = []
         for i in range(1, 45):
             if len(self.args[i]) > 0:
-                implot(self.args[i])
-                
+                for n in range(0, len(self.args[i]), 2):
+                    implot.append(self.ax.imshow(self.args[i][n],
+                                                 **self.args[i][n+1]))
+        self.ax.set_title(self.char.name)
+        self.ax.text(50, -595, r'Art from $www.HeroMachine.com$')
+        plt.show()
+
     def draw_char(self):
         self.set_colors()
         self.ax.axis('off')  # no axis
         self.ax.set_xlim(0, 400)
         self.ax.set_ylim(-600, 0)
-        exf = (0, 400, -600, 0)
         for i in range(1, 45):
-            if i in self.lst_body:  # we have a body-part
-                self.draw_body(i, exf)
-            elif i in self.lst_clths:
-                self.draw_clothes(i, exf)
-            elif i in self.lst_itms:
-                self.draw_itms(i)
-        plt.show()
+            self.draw_loc(i)
+
+    def draw_loc(self, i):
+        exf = (0, 400, -600, 0)
+        if i in self.lst_body:  # we have a body-part
+            self.draw_body(i, exf)
+        elif i in self.lst_clths:
+            self.draw_clothes(i, exf)
+        elif i in self.lst_itms:
+            self.draw_itms(i)
 
     def draw_itms(self, i):
         '''
@@ -177,7 +185,10 @@ class Appearance(object):
             item = self.items[i]
         except:
             item = None
+        self.args[i] = []  # reset this dict
         if item is not None:
+            ext = None
+
             for itm in range(1, 7):
                 if len(str(item[itm + 14])) > 0:  # we have a file...
                     fname = ('../images/items/{}.png'
@@ -202,7 +213,6 @@ class Appearance(object):
                         mat = 'ash'
                     # get the image ready...
                     image = Image.open(fname).convert('RGBA')
-
                     im = self.set_color(image, clr, mat)  # set color
                     #rotate
                     pivot = (item[-2], item[-1])
@@ -211,38 +221,38 @@ class Appearance(object):
                     w = im.size[0]
                     h = im.size[1]
                     imr = rotate(im, -self.angles[i][4])
-                    # get actual shape of image...
-                    hn = imr.shape[0]
-                    wn = imr.shape[1]
-                    # ... order is different for reasons.
+                    if ext is None:
+                        # get actual shape of image...
+                        hn = imr.shape[0]
+                        wn = imr.shape[1]
+                        # ... order is different for reasons.
 
-                    # trig functions
-                    theta = (-self.angles[i][4] * math.pi/180.0)
-                    # theta = 0
-                    cs = math.cos(theta)
-                    sn = math.sin(theta)
-                    hyp = sqrt((w/2 - pivot[0])**2 + (h/2 - pivot[1])**2)
-                    dx = hyp*sn
-                    dy = hyp*(1 - cs)
-                    x = self.angles[i][0]
-                    y = self.angles[i][1]
-                    pvx = pivot[0] - self.angles[i][5]*dx
-                    pvy = pivot[1] + dy
-                    # find where the corner goes...
-                    xc = self.angles[i][0] - pvx
-                    yc = self.angles[i][1] - pvy
-                    # extent change...
-                    xn = xc - wn/2 + w/2
-                    yn = yc - hn/2 + h/2
-                    if self.pheno == 'f':
-                        xn = xn - self.angles[i][2]
-                        yn = yn - self.angles[i][3]
-                    extnt = (xn, xn + wn, -1*(yn + hn), -1*(yn))
-                    if self.angles[i][5] == -1:
-                        extnt = (xn + wn, xn, -1*(yn + hn), -1*(yn))
-                    # okay, now the color...
-                    #   implot = self.ax.imshow(imr, aspect='equal', extent=extnt)
-                    self.args[i] = (imr, aspect='equal', extent=extnt)
+                        # trig functions
+                        theta = (-self.angles[i][4] * math.pi/180.0)
+                        # theta = 0
+                        cs = math.cos(theta)
+                        sn = math.sin(theta)
+                        hyp = sqrt((w/2 - pivot[0])**2 + (h/2 - pivot[1])**2)
+                        dx = hyp*sn
+                        dy = hyp*(1 - cs)
+                        x = self.angles[i][0]
+                        y = self.angles[i][1]
+                        pvx = pivot[0] - self.angles[i][5]*dx
+                        pvy = pivot[1] + dy
+                        # find where the corner goes...
+                        xc = self.angles[i][0] - pvx
+                        yc = self.angles[i][1] - pvy
+                        # extent change...
+                        xn = xc - wn/2 + w/2
+                        yn = yc - hn/2 + h/2
+                        if self.pheno == 'f':
+                            xn = xn - self.angles[i][2]
+                            yn = yn - self.angles[i][3]
+                        ext = (xn, xn + wn, -1*(yn + hn), -1*(yn))
+                        if self.angles[i][5] == -1:
+                            ext = (xn + wn, xn, -1*(yn + hn), -1*(yn))
+                    self.args[i].append(imr)
+                    self.args[i].append(dict(aspect='equal', extent=ext))
 
     def draw_body(self, i, exf):
         '''
@@ -256,7 +266,7 @@ class Appearance(object):
                 fname = ('../images/appearance/hair/{}.png'
                          .format(self.hair[0])
                          .replace('G', self.pheno))
-                self.draw_full(fname, self.c_hair, exf, i)
+                self.draw_full(fname, self.c_hair, exf, 'none', i)
         if i == 7:
             # body...
             fname = '../images/appearance/h{}body.png'.format(self.pheno)
@@ -267,27 +277,27 @@ class Appearance(object):
             self.draw_full(fname, self.c_skin, exf, 'skin', i)
             fname = ('../images/appearance/eyes/{}.png'.format(self.face[1])
                      .replace('G', self.pheno))
-            self.draw_full(fname, self.c_eye, exf)
+            self.draw_full(fname, self.c_eye, exf, 'none', i, True)
         if i == 9:
             fname = ('../images/appearance/mouth/{}.png'.format(self.face[2])
                      .replace('G', self.pheno))
             self.draw_full(fname, self.c_skin, exf, 'skin', i)
             fname = ('../images/appearance/ebrow/{}.png'.format(self.face[3])
                      .replace('G', self.pheno))
-            self.draw_full(fname, self.c_hair, exf)
+            self.draw_full(fname, self.c_hair, exf, 'none', i, True)
             fname = ('../images/appearance/nose/{}.png'.format(self.face[4])
                      .replace('G', self.pheno))
-            self.draw_full(fname, self.c_skin, exf, 'skin', i)
+            self.draw_full(fname, self.c_skin, exf, 'skin', i, True)
         if i == 10:
             if not self.has_helm():
                 fname = ('../images/appearance/hair/{}.png'.format(self.hair[1])
                          .replace('G', self.pheno))
-                self.draw_full(fname, self.c_hair, exf, i)
+                self.draw_full(fname, self.c_hair, exf, 'none', i)
         if i == 42:  # hands!
             fname = ('../images/appearance/h{}handsr.png'.format(self.pheno))
             self.draw_full(fname, self.c_skin, exf, 'skin', i)
             fname = ('../images/appearance/h{}handsl.png'.format(self.pheno))
-            self.draw_full(fname, self.c_skin, exf, 'skin', i)
+            self.draw_full(fname, self.c_skin, exf, 'skin', i, True)
 
     def draw_clothes(self, i, ext):
         '''
@@ -310,8 +320,10 @@ class Appearance(object):
                         mat = self.items[i][mat_n]
                     except:
                         mat = 'none'
-                    self.draw_full(fname, self.c_clot[n], ext, mat, i)
-
+                    if n == 0:
+                        self.draw_full(fname, self.c_clot[n], ext, mat, i)
+                    else:
+                        self.draw_full(fname, self.c_clot[n], ext, mat, i, True)
         else:
             # draw outter hair or underwear if applicable...
             if i == 37:
@@ -327,13 +339,17 @@ class Appearance(object):
                  fname = ('../images/clothes/fbra.png')
                  self.draw_full(fname, 'xfaf0e6', ext, 'linen', i)
 
-    def draw_full(self, fname, color, ext, mat, i):
+    def draw_full(self, fname, color, ext, mat, i, apnd=False):
         '''
         '''
         im = Image.open(fname).convert('RGBA')
         img = self.set_color(im, color, mat)
         # implot = self.ax.imshow(img, aspect='equal', extent=ext)
-        self.args[i] = (img, aspect='equal', extent=ext)
+        if apnd:
+            self.args[i].append(img)
+            self.args[i].append(dict(aspect='equal', extent=ext))
+        else:
+            self.args[i] = [img, dict(aspect='equal', extent=ext)]
 
     def set_colors(self):
         '''

@@ -15,3 +15,10 @@ At the moment, this shows that a dice roller with rerolls is possible using MatP
 ![Image of Dice App](/images/Figure_1.png)
 
 The [dice images](https://github.com/NeverForged/Neverforged/tree/master/images/dice) are images that were made a while ago for another App.  Clicking on one launches the reroll or explode code for the dice.  The "x" in the corner is a pair of scatter plots.  Click spaces were set using a for loop in an *onClick* event, using the areas assigned to the dice as the clickable spaces to operate code.  The "x" was assigned to close the plot, do it's business, and reopen it.  With more work one could save the locations of the dice and only change the location of the rerolled element.  I may do this for future versions.
+
+## Appearance
+This is a first-step toward a *'paper doll'* inventory management system for the game.  It is missing a few functions (glove handling, straps for back items), but does have textures.  Also does not have a way to manage it yet, only draws what is assigned in the database (using SQLite to test features).
+
+![Sample character](/images/bryn.png)
+
+This was generated in MatPlotLib (using Pil, scipy, numpy, etc).  Arguments are saved to a dictionary so that (eventually) when an item is changed, it will change only a single feature.  
