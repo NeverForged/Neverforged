@@ -1,4 +1,5 @@
-# Neverforged
+![Neverforged Roleplaying Game](images/neverforged_logo.png)
+
 Neverforged is a table top role playing game I've been developing in my spare time for the last few years.
 
 ## Dice.py
