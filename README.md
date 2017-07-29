@@ -1,9 +1,16 @@
 ![Neverforged Roleplaying Game](images/neverforged_logo.png)
 
-Neverforged is a table top role playing game I've been developing in my spare time for the last few years.
+**Neverforged** is a table top role playing game I've been developing in my spare time for the last few years.  After graduating from [Galvanize](https://www.galvanize.com/seattle/data-science), I decided to write it up in Python 3 to keep up my coding skills as I job hunt.  Shameless self-plug [here](https://www.linkedin.com/in/darinlasota/).
+
+The game itself is an attempt to integrate Narrative and Tactical combat styles into a single game, allowing players to act on all turns, with turn ownership being about Narrative control.
+
+At present, the *"Fluff"* of the game is based on a reimagined Earth where deserts are smaller, allowing resources to travel more easily, placing cultures at roughly the same technological level.  A planet where *Dong Gua* (Read: China) conquered *The Great Republic* (Read: Rome) around the time of the switch from *Republic* to *Empire*, thus creating a more integrated East-West (and allowing a combination of *Medieval Fantasy* and *Wu Xia*, as well as a use of *Dong Hua* as a language of education and religion).  The specific area of focus at the moment, given the ease of understanding due to *[other roleplaying games](http://dnd.wizards.com/)*, is the equivalent of Medieval England about to suffer the *Restless Death*, a bubonic-plague where, upon death, the infected rise as zombies to infect the living.
+
+>A Plague is sweeping through the continent, killing thousands, replacing them with mindless undead that seek to infect and consume the living.  An ancient order, fallen into disrepair, is recalled by the Church; prisoners are being sentenced to the order, and others are volunteering, fearing that the Plague may reach the shores of the Raven Isle.  The order hopes to reestablish their old castles, hopefully before the Plague reaches Corvish Shores.
+Can the Plague be stopped?  Can anyone survive it?  Will the Plague Hunters keep the people safe, or just add to the Army of Pestilence that seeks to devour all of humanity?
 
 ## Dice.py
-The Dice class is a dice roller for the game I'm writing.  The reason I'm sharing it is that it creates a dice rolling space in MatPlotLib with clickable explodes/rerolls.  The actual method is tied into the game I'm writing; however the work I did getting the image to show and reroll I don't mind sharing.  If there is demand for it, I could make a general dice roller out of it.
+At the moment, this shows that a dice roller with rerolls is possible using MatPlotLib.
 
 ![Image of Dice App](/images/Figure_1.png)
 
