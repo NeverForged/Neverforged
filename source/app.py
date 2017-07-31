@@ -1,9 +1,6 @@
 import os
 import sys
 import time
-%matplotlib inline
-# import matplotlib
-# # matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from Appearance import Appearance
 from flask import Flask, render_template, request, jsonify, redirect
