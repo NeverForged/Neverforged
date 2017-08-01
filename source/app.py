@@ -9,13 +9,12 @@ from flask import Flask, render_template, request, jsonify, redirect
 
 app = Flask(__name__)
 @app.route('/index')
-def hello()
+def hello():
     return "Hello world"
 
 @app.route('/draw/<specs>.png')
 def draw(specs):
-    plt.ioff()
-    #if not os.path.exists('/static/images/' + self.specs + '.png'):
+        #if not os.path.exists('/static/images/' + self.specs + '.png'):
     print('need to draw this combination')
     fig, ax = plt.subplots(1, figsize=(4.0, 6.0))
     appr = Appearance(None, None, ax, specs)
