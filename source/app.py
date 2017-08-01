@@ -8,6 +8,9 @@ from Appearance import Appearance
 from flask import Flask, render_template, request, jsonify, redirect
 
 app = Flask(__name__)
+@app.route('/index')
+def hello()
+    return "Hello world"
 
 @app.route('/draw/<specs>.png')
 def draw(specs):
