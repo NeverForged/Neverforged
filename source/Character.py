@@ -410,3 +410,4 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(1, figsize=(6, 6))
     app = Appearance(char, char.db, ax)
     app.draw_char()
+    app.show()

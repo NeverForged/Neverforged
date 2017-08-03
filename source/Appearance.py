@@ -12,7 +12,6 @@ from collections import defaultdict
 class Appearance(object):
     '''
     Handles graphics relating to the appearance of a PC.
-
     1	back-center
     2	back-left
     3	back-right
@@ -229,12 +228,10 @@ class Appearance(object):
         if self.char is not None:
             self.ax.set_title(self.char.name)
         self.ax.text(50, -595, r'Art from $www.HeroMachine.com$')
-        print('start save..................................................')
         # plt.savefig('../source/static/source/static/images/' + self.specs + '.png', bbox_inches='tight')
         self.ax.get_figure().savefig('../source/static/images/temp.png', bbox_inches='tight', dpi=100)
-        print('.................................end save')
-        # if self.char is not None:
-        #     plt.show()
+        if self.char is not None:
+            plt.show()
 
     def draw_char(self):
         self.set_colors()

@@ -161,7 +161,7 @@ class Roll(object):
         fig_loc_y = []
 
         for i, die in enumerate(self.dice):
-            im = image.imread('../images/dice/d' + str(self.dicesides[i]) +
+            im = image.imread('../source/static/images/dice/d' + str(self.dicesides[i]) +
                               '_' + str(self.dice[i]) + '.png')
             angle = 0
             if int(self.dicesides[i]) >= 5:
