@@ -26,6 +26,7 @@ class Database(object):
         '''
         Input some SQL code in query, get the results in a return
         '''
+        print(query)
         cursor = self.connection.cursor()
         cursor.execute(query)
         if 'INSERT' in query or 'REPLACE' in query or 'UPDATE' in query:
