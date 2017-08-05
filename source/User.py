@@ -1,5 +1,5 @@
 from Database import Database
-
+from Character_Creation import CharacterCreation
 
 class User(object):
     '''
@@ -26,3 +26,10 @@ class User(object):
             self.user = user
             self.char = None
             self.npcs = {}
+
+    def new_character(self):
+        self.new_char = CharacterCreation(self.user)
+        return self.new_char
+
+    def __repr__(self):
+        return self.user
