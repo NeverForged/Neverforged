@@ -44,12 +44,12 @@ class Database(object):
         size...
         '''
         stack = self.query('SELECT stack FROM equipment WHERE _id={}'
-                           .format(item))
+                           .format(item))[0][0]
         if stack > 1:
             try:
                 sqt = self.db('SELECT _id, qt FROM PC_inventory WHERE ' +
                              'item={} AND character={} AND loc={}'
-                             .format(item, char, loc))
+                             .format(item, char, loc))[0][0]
                 nqt = sum([q[1] for q in qt])
                 nums = [q[0] for q in qt]
             except:
