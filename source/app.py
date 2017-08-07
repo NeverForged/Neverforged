@@ -176,7 +176,8 @@ def stats():
                          fantasy; font-size: 24px; font-variant: small-caps;">
                          <b>- Skills -</b></span></center></th>
                 </tr><tr>
-                    <td width=50%><table width="50%">
+                    <td width=50%><table width="49.5%">
+                        <tr><td width="15.5%">
                  ''')
     ret = ret + wb.end
     return ret
