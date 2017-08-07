@@ -310,7 +310,8 @@ class CharacterCreation(object):
         if var == '_final':
             self.name = name
             # find the char id...
-            char_id = len(self.db.query('SELECT * FROM PC'))
+            char_id = int(self.db.query('SELECT _id FROM PC GROUP BY _id '
+                                        'ORDER BY _id DESC')[0][0]) + 1
             # now to insert a character....
             # INSERT INTO table_name (column1, column2, column3, ...)
             # VALUES (value1, value2, value3, ...)
@@ -368,7 +369,9 @@ class CharacterCreation(object):
             print(query)
             self.db.query(query)
             # Languages first...
-            _id = char_id * 1000
+            _id = int(self.db.query('SELECT _id FROM PC_skills ' +
+                                    'GROUP BY _id ORDER BY _id ' +
+                                    'DESC LIMIT 1')[0][0])
             print(langs)
             for lang in langs:
                 if len(str(lang)) >= 1:
@@ -383,21 +386,31 @@ class CharacterCreation(object):
             for sk in sk2:
                 sk1.pop(sk1.index(sk))
             for i, sk in enumerate(sk2):
-                _id += 1
+                _id = int(self.db.query('SELECT _id FROM PC_skills ' +
+                                        'GROUP BY _id ORDER BY _id ' +
+                                        'DESC LIMIT 1')[0][0]) + 1
                 lev = 1
                 if sk in langs: # mastery/literacy
                     lev = int((self.trts[4] + self.trta[4])/4)
-                elif sk in sk1: # x2 = apprentice level at start
-                    lev = 2
-                self.db.query('INSERT INTO PC_skills (_id, character, '+
-                              'skill, level) ' +
-                              'VALUES ({}, {}, {}, 1)'
-                              .format(_id, char_id, sk, lev))
+                    self.db.query('UPDATE PC_skills ' +
+                                  'SET level={} '.format(lev) +
+                                  'WHERE character={} '.format(char_id) +
+                                  'AND skill={}'.format(sk))
+                else:
+                    if sk in sk1: # x2 = apprentice level at start
+                        lev = 2
+                    self.db.query('INSERT INTO PC_skills (_id, character, '+
+                                  'skill, level) ' +
+                                  'VALUES ({}, {}, {}, 1)'
+                                  .format(_id, char_id, sk, lev))
             # item time...
             for i, it in enumerate(items):
                 stack = self.db.query('SELECT stack FROM equipment WHERE _id={}'
-                                   .format(it[0]))
-                self.db.add_item(it[0], char_id, qt[i]*stack, 0)
+                                   .format(it[0]))[0][0]
+                if qt[i] == 1:
+                    self.db.add_item(it[0], char_id, qt[i]*stack, 0)
+                else:
+                    self.db.add_item(it[0], char_id, qt[i], 0)
             return '_red/'
         # return value.
         return ret

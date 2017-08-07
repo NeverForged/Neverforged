@@ -7,6 +7,7 @@ from User import User
 from Web_Temp import WebTemp
 from Database import Database
 import matplotlib.pyplot as plt
+from Character import Character
 from Appearance import Appearance
 from UserHandler import UserHandler
 from flask import Flask, render_template, request, jsonify, redirect
@@ -137,21 +138,48 @@ def make_char(var):
 @app.route('/load_<int:char_id>')
 def load(char_id):
     '''
-    '''
-    pass
-
-def check_ip():
-    '''
-    Makes sure the ip has a listed user...
+    Load a character...
     '''
     ip = request.remote_addr
     try:
-        uh.user_d[ip] = user
-        return ip
+        user = uh.user_d[ip]
     except:
         return redirect('/')
+    db = Database('NeverforgedData')
+    user.char = Character(char_type='PC', sql_id=char_id, db=db)
+    return redirect('/stats')
 
-
+@app.route('/stats')
+def stats():
+    '''
+    Stats Page...
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    wb = WebTemp()
+    ret = wb.start
+    ret = ret + ('<center>' +
+                 '<span style="font-family: Papyrus, fantasy; ' +
+                 'font-size: 30px; font-variant: small-caps;"><b>' +
+                 user.char.name + '</b></span></center>')
+    # Traits and Skills...
+    ret = ret + ('''
+                 <table width="100%">
+                 <tr>
+                     <th width=50%><center><span style="font-family: Papyrus,
+                         fantasy; font-size: 24px; font-variant: small-caps;">
+                         <b>- Traits -</b></span></center></th>
+                     <th width=50%><center><span style="font-family: Papyrus,
+                         fantasy; font-size: 24px; font-variant: small-caps;">
+                         <b>- Skills -</b></span></center></th>
+                </tr><tr>
+                    <td width=50%><table width="50%">
+                 ''')
+    ret = ret + wb.end
+    return ret
 
 if __name__ == '__main__':
 

@@ -39,11 +39,8 @@ class Character(object):
         self.type = char_type
         self.id = sql_id
         self.db = db
-        if self.id is None:
-            self.create_new()
-        else:
-            self.name = self.db.query('SELECT name FROM ' + self.type +
-                                      ' WHERE _id = ' +str(self.id))[0][0]
+        self.name = self.db.query('SELECT name FROM ' + self.type +
+                                  ' WHERE _id = ' +str(self.id))[0][0]
         self.skills = Skills(self.id, self.type, self.db, self)
         self.trait_guide = ['S', 'D', 'F', 'C', 'I', 'W']
         self.trait_values = self.db.query('SELECT s, d, f, c, i, w ' +
@@ -94,7 +91,7 @@ class Character(object):
             query = query + ', {} = {}'.format(cols[i], vals[i])
         query = query + ' WHERE _id = {}'.format(self.id)
         self.db.query(query)
-        
+
 if __name__ == '__main__':
     db = Database('NeverforgedData')
     if len(sys.argv) > 1:

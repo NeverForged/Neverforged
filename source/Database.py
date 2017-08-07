@@ -55,30 +55,46 @@ class Database(object):
             except:
                 nqt = 0
                 tqt = qt + nqt
+                nums = []
             i = 0
             while tqt >= stack:
-                if len(nums) <= i:
-                    _id = i
+                if len(nums) >= i + 1:
+                    _id = nums[i]
+                    self.query('UPDATE PC_inventory ' +
+                               'SET qt={}'.format(tqt) +
+                               'WHERE _id={}'.format(_id)
+                               .format(_id, char, item, loc, tqt))
                 else:
-                    _id = len(self.query('SELECT * FROM PC_inventory'))
-                self.query('INSERT INTO PC_inventory (_id, character, item, ' +
-                           'loc, worn, qt)' +
-                           'VALUES ({}, {}, {}, {}, 0, {})'
-                           .format(_id, char, item, loc, stack))
-
+                    _id = int(self.query('SELECT _id FROM PC_inventory ' +
+                                         'GROUP BY _id  ORDER BY _id '
+                                         'DESC LIMIT 1')[0][0]) + 1
+                    self.query('INSERT INTO PC_inventory (_id, character, ' +
+                               'item, loc, worn, qt)' +
+                               'VALUES ({}, {}, {}, {}, 0, {})'
+                               .format(_id, char, item, loc, stack))
+                i += 1
                 tqt = tqt - stack
             if tqt >= 0:
-                if len(nums) <= i:
-                    _id = i
+                if len(nums) >= i + 1:
+                    _id = nums[i]
+                    self.query('UPDATE PC_inventory ' +
+                               'SET qt={}'.format(tqt) +
+                               'WHERE _id={}'.format(_id)
+                               .format(_id, char, item, loc, tqt))
+
                 else:
-                    _id = len(self.query('SELECT * FROM PC_inventory'))
-                self.query('INSERT INTO PC_inventory (_id, character, item, ' +
-                           'loc, worn, qt)' +
-                           'VALUES ({}, {}, {}, {}, 0, {})'
-                           .format(_id, char, item, loc, tqt))
+                    _id = int(self.query('SELECT _id FROM PC_inventory ' +
+                                         'GROUP BY _id  ORDER BY _id '
+                                         'DESC LIMIT 1')[0][0]) + 1
+                    self.query('INSERT INTO PC_inventory (_id, character, item, ' +
+                               'loc, worn, qt)' +
+                               'VALUES ({}, {}, {}, {}, 0, {})'
+                               .format(_id, char, item, loc, tqt))
         else:
             while qt >= 0:
-                _id = len(self.query('SELECT * FROM PC_inventory'))
+                _id = int(self.query('SELECT _id FROM PC_inventory ' +
+                                     'GROUP BY _id  ORDER BY _id '
+                                     'DESC LIMIT 1')[0][0]) + 1
                 self.query('INSERT INTO PC_inventory (_id, character, item, ' +
                            'loc, worn, qt)' +
                            'VALUES ({}, {}, {}, {}, 0, {})'
