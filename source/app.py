@@ -4,6 +4,7 @@ import time
 import matplotlib
 matplotlib.use('Agg')
 from User import User
+from Dice import Roll
 from Web_Temp import WebTemp
 from Database import Database
 import matplotlib.pyplot as plt
@@ -114,7 +115,7 @@ def make_char(var):
     except:
         ans = ''
     try:
-        filt = request.args.get('filter', None)
+        filt = request.args.get('filter', '')
     except:
         filt = ' '
     try:
@@ -157,6 +158,7 @@ def stats():
     ip = request.remote_addr
     try:
         user = uh.user_d[ip]
+        user.char.name
     except:
         return redirect('/')
     wb = WebTemp()
@@ -175,12 +177,333 @@ def stats():
                      <th width=50%><center><span style="font-family: Papyrus,
                          fantasy; font-size: 24px; font-variant: small-caps;">
                          <b>- Skills -</b></span></center></th>
-                </tr><tr>
-                    <td width=50%><table width="49.5%">
-                        <tr><td width="15.5%">
-                 ''')
+                 </tr>
+                 ''') # end headers for stats page
+    # stats... nesting a table
+    ret = ret + user.char.trait_table_start
+    for i in range(3):
+        j = i + 3
+        al = ''
+        if i == 1:
+            al = 'style="background-color:#eee;"'
+        ret = ret + ('<tr><td {}>{}</td>'
+                     .format(al, user.char.trait_names[i]) +
+                     '<td {}><div class="dropdown">'.format(al) +
+                     '<b><button class="dropbtn">{}&nbsp;&nbsp;&nbsp;</button>'
+                     .format(user.char.trait_values[i]) +
+                     '<div class="dropdown-content">' +
+                     '<a href="/trait_raise{}">Raise</a>'.format(i) +
+                     '<a href="/trait_raise-{}">Lower</a>'.format(i) +
+                     '</div></div></td>' +
+                     '<td {}><div class="dropdown">'.format(al) +
+                     '<button class="dropbtn">{}</button>'
+                     .format(user.char.trait_dice[i]) +
+                     '<div class="dropdown-content">' +
+                     '<a href="/roll{}_">Roll</a>'.format(i) +
+                     '<a href="/roll{}_a">Advantage</a>'.format(i) +
+                     '<a href="/roll{}_d">Disadvantage</a>'.format(i) +
+                     '</div></div></td><td></td>' +
+                      '<td></td>'
+                     '<td {}></td>'.format(al) +
+                     '<td {}>{}</td>'
+                     .format(al, user.char.trait_names[j]) +
+                     '<td {}><div class="dropdown">'.format(al) +
+                     '<b><button class="dropbtn">{}&nbsp;&nbsp;&nbsp;</button>'
+                     .format(user.char.trait_values[j]) +
+                     '<div class="dropdown-content">' +
+                     '<a href="/trait_raise{}">Raise</a>'.format(j) +
+                     '<a href="/trait_raise-{}">Lower</a>'.format(j) +
+                     '</div></div></td>' +
+                     '<td {}><div class="dropdown">'.format(al) +
+                     '<button class="dropbtn">{}</button>'
+                     .format(user.char.trait_dice[j]) +
+                     '<div class="dropdown-content">' +
+                     '<a href="/roll{}_">Roll</a>'.format(j) +
+                     '<a href="/roll{}_a">Advantage</a>'.format(j) +
+                     '<a href="/roll{}_d">Disadvantage</a>'.format(j) +
+                     '</div></div></td><td></td></tr>')
+    ret = ret + '</table><center></center>'
+    ret = ret + ('<br><br><table width="100%" border="1px"><colgroup>{}</colgroup>'
+                 .format(''.join(['<col style="width: 25%;">'
+                                  for i in range(3)])))
+    ret = ret + ('<tr><td colspan="4"><center>{}</center>'
+                 .format(user.roll.show_roll) + '</td></tr>')
+    for j in range(4):
+        ret = ret + '<tr>'
+        for i in range(4):
+            img = user.roll.empty
+            if user.roll.dice_location[i] == j:
+                img = user.roll.dice_pic[i]
+            ret = ret + '<td>{}</td>'.format(img)
+        ret = ret + '</tr>'
+    ret = ret + ('</table><center>{}</center>'
+                 .format(user.roll.results))
+    # SKILL TRAINING
+    ret = ret + ('<table width=100%><colgroup>' +
+                 '<col style="width:50%; text-align: center;"/>' +
+                 '<col style="width:50%; text-align: center;"/><colgroup>' +
+                 '<tr><td colspan="2"><span style="font-family: Papyrus, '+
+                 'fantasy; font-size: 14px; font-variant' +
+                 ':small-caps; text-align: center;">' +
+                 '<br><br><b><center>- Skill Training - </center></b></span>')
+    # Need this list in two places...
+    skills = list(user.char.skills.keys())
+    print(skills)
+    skills.sort()
+    print(skills)
+    for i in range(3):
+        al = ''
+        if i == 1:
+            al = 'style="background-color:#eee;"'
+        ret =  ret + ('<tr><td {}><center><div class="dropdown">'.format(al) +
+                      '<button class="dropbtn">{}</button>'
+                      .format(user.char.training[i]) +
+                      '<div class="dropdown-content">')
+        for skill in skills:
+            ret = ret + ('<a href="/skill_train_{}_{}">'.format(skill, i) +
+                         '{}</a>'.format(skill))
+        ret = ret + ('</div></div></center></td><td {}><center>'.format(al) +
+                     '<div class="dropdown"><button class="dropbtn">{}'
+                     .format(user.char.training_val[i]) +
+                     '</button><div class="dropdown-content">' +
+                     '<a href="/sktnset_1_{}">[x][&nbsp;&nbsp;]'.format(i) +
+                     '[&nbsp;&nbsp;]</a>' +
+                     '<a href="/sktnset_2_{}">[x][x][&nbsp;&nbsp;]</a>'
+                     .format(i) +
+                     '<a href="/sktnset_3_{}">[x][x][x]</a>'.format(i))
+        if user.char.training_val[i] == '[x][x][x]':
+            ret = ret + ('<a href="/skinc_{}"><i>Train Up!</i></a>'
+                         .format(user.char.training[i]))
+        ret = ret + '</div></div></center></td></tr>' # end skill train
+
+    # - SKILLS -
+    ret = ret + '</table></td><td><table width=100%>'
+    levd = {}
+    ind = '&nbsp;&nbsp;&nbsp;'
+    for i, skill in enumerate(skills):
+        al = 'style:"width=100%; padding-right:100%;"'
+        if i % 2 == 1:
+            al = ' style="width=100%; background-color:#eee;"'
+        ret = ret + '<tr{}><td>'.format(al)
+        lev = user.char.skills[skill][-1]
+        try:
+            level = levd[str(lev)]
+        except:
+            levd={'1':'Trained', '2':'Apprentice', '3':'Journeyman',
+                  '4': 'Master'}
+            level = levd[str(lev)]
+        ret = ret + ('<div class="dropdownsk"><button class="dropbtn">{} - [{}]'
+                     .format(skill, level) +
+                     '</button><div class="dropdownsk-content">')
+        # now the filler...
+        ret = ret + ind + ('<b>Tags:</b> {}'
+                           .format(user.char.skills[skill][2]))
+        if len(user.char.skills[skill][3]) >= 1:
+            ret = ret + ind + ('&nbsp;[Roll: {}]'
+                               .format(user.char.skills[skill][3]))
+        ret = ret + '<br>' + ind + ('<i>{}</i>'
+                                    .format(user.char.skills[skill][4]))
+        if len(user.char.skills[skill][5]) >= 1:
+            ret = ret + '<br>' + ind + ('<b>Untrained:</b> {}'
+                                        .format(user.char.skills[skill][5]))
+        for i in range(int(lev)):  # just the levels they have
+            if len(user.char.skills[skill][i + 6]) >= 1:
+                ret = (ret + '<br>' +
+                       ind + '<b>{}:</b> {}'
+                             .format(levd[str(i + 1)],
+                                     user.char.skills[skill][i + 6]))
+        ret = ret + '</td></tr>'
+    ret = ret + '</div></div></table></table>'
+
+    # rule lookup...
+    ret = ret + ('<center><br><br><span style="font-family: Papyrus, ' +
+                 'fantasy; font-size: 24px; font-variant: small-caps;">' +
+                 '<b>- Rulebook -</b></span>')
+    ret = ret + user.rules.rules_show
+    ret = ret + '<br><form action="/rules_filter">'
+    ret = ret + ('<p>Search: <input type="text" name="filter" ' +
+                 'value="{}">'.format(user.rules.filter).replace('None', '') +
+                '</p><input type="submit" value="Apply">')
+    ret = ret + ('<br><div class="dropdown">Table: <button class="dropbtn">{}'
+                 .format(user.rules.table) +
+                 '</button><div class="dropdown-content">')
+    for table in user.rules.tables:
+        ret = ret + '<a href="/rules_table_{}">{}</a>'.format(table, table)
+    ret = ret + ('</div></div>&nbsp;&nbsp;&nbsp;&nbsp;' +
+                 '<div class="dropdown">Tag: <button class="dropbtn">{}'
+                 .format(user.rules.tag) +
+                 '</button><div class="dropdown-content">')
+    for tag in user.rules.tags:
+        ret = ret + '<a href="/rules_tag_{}">{}</a>'.format(tag, tag)
+    # done
     ret = ret + wb.end
-    return ret
+    return ret, 200
+
+@ app.route('/rules_tag_<tag>')
+def set_rules_tag(tag):
+    '''
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    user.rules.tag = tag
+    user.rules.update()
+    return redirect('/stats')
+
+@app.route('/rules_table_<table>')
+def set_rules_table(table):
+    '''
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    user.rules.table = table
+    user.rules.tag  = '-All-'
+    user.rules.update()
+    return redirect('/stats')
+
+@app.route('/traits')
+def red_rect():
+    return redirect('/stats')
+
+@app.route('/rules_filter')
+def get_rules_filter():
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    filt = request.args.get('filter', '')
+    user.rules.filter = filt
+    user.rules.update()
+    return redirect('/stats')
+
+@app.route('/skinc_<skill>')
+def increase_skill(skill):
+    '''
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    sk_id = user.char.db.query('SELECT _id FROM skills WHERE name=\'{}\''
+                               .format(skill))[0][0]
+    level = int(user.char.db.query('SELECT level FROM PC_skills ' +
+                                   'WHERE character={} '.format(user.char.id) +
+                                  'AND skill={}'.format(sk_id))[0][0])
+    if level <= 3:
+        user.char.db.query('UPDATE PC_skills SET level={} '.format(level + 1) +
+                           'WHERE character={} AND skill={}'
+                           .format(user.char.id, sk_id))
+    idx = user.char.training.index(skill)
+    user.char.training[idx] = '-pick a skill to train-'
+    user.char.training_val[idx] = '[&nbsp;&nbsp;][&nbsp;&nbsp;][&nbsp;&nbsp;]'
+    return redirect('/stats')
+
+@app.route('/skill_train_<var>')
+def set_skill_training(var):
+    '''
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    lst = var.split('_')
+    user.char.training[int(lst[1])] = lst[0]
+    user.char.training_val[int(lst[1])] = ('[&nbsp;&nbsp;][&nbsp;&nbsp;]'+
+                                           '[&nbsp;&nbsp;]')
+    return redirect('/stats')
+
+@app.route('/sktnset_<var>')
+def skill_box(var):
+    '''
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    if lst[0] == '1':
+        user.char.training_val[int(lst[1])] = '[x][&nbsp;&nbsp;][&nbsp;&nbsp;]'
+    elif lst[0] == '2':
+        user.char.training_val[int(lst[1])] = '[x][x][&nbsp;&nbsp;]'
+    elif lst[0] == '3':
+        user.char.training_val[int(lst[1])] = '[x][x][x]'
+    return redirect('/stats')
+
+@app.route('/roll<var>')
+def roll(var):
+    '''
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    trts = ['Strength', 'Dexterity', 'Fortitude',
+            'Charisma', 'Intelligence', 'Willpower']
+    lst = var.split('_')
+    user.roll = Roll(user.char.trait_dice[int(lst[0])], lst[1],
+                     trts[int(lst[0])])
+    user.roll.web_show()
+    return redirect('/stats')
+
+@app.route('/reroll<var>')
+def rereoll(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    if lst[0] == 'e':
+        print(lst[1])
+        user.roll.explode(int(lst[1]))
+    else:
+        print(lst[1])
+        user.roll.reroll(int(lst[1]))
+    user.roll.web_show()
+    return redirect('/stats')
+
+@app.route('/trait_raise<var>')
+def t_raise(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    tr = int(var)
+    vals = []  #left in tuple format, must correct
+    up = 1
+    if tr <= 0:
+        tr = -1*tr
+        up = -1
+    for i, val in enumerate(user.char.trait_values):
+        if i == tr:
+            vals.append(val + up)
+        else:
+            vals.append(val)
+    user.char.trait_values = vals
+    user.char.save()
+    char_id = user.char.id
+    db = user.char.db
+    user.char = Character(char_type='PC', sql_id=char_id, db=db)
+    return redirect('/stats')
+
+
+@app.route('/appearance-background')
+def app-bg():
+    '''
+    Appearance and Background pages
+    '''
 
 if __name__ == '__main__':
 

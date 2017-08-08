@@ -14,16 +14,16 @@ class Roll(object):
         kept -> kept dice (if adv = "a" or "d", not the same as dice)
     '''
 
-    def __init__(self, dicecode="3d6", adv='', image=False, fig=None, ax=None):
+    def __init__(self, dicecode="3d6", adv='', trait=None,
+                 image=False, fig=None, ax=None):
         '''
         Initialize the dice.
         '''
         self.dicecode = dicecode
         self.adv = adv.lower()
+        if self.adv == 'n':
+            self.adv = ''
         self.dicesides = self.dice_translator(dicecode, adv)
-        self.dice = self.roll_all(self.dicesides)
-        self.dice_held = self.dice[:]
-        self.total = self.get_total(adv)
         self.L = 0
         self.M = 0
         self.H = 0
@@ -31,12 +31,25 @@ class Roll(object):
         self.LH = 0
         self.MH = 0
         self.LMH = 0
+        self.results = ''
+        self.dice = self.roll_all(self.dicesides)
+        self.dice_held = self.dice[:]
+        self.total = self.get_total(adv)
         self.get_stats(adv)
-        if fig is None:
-            self.fig, self.ax = plt.subplots(1, figsize=(4, 3))
-        else:
-            self.fig = fig
-            self.ax = ax
+        # for web app
+        self.dice_location = [rnd.randint(0,3) for i in range(4)]
+        self.trait = trait
+        self.show_roll = ('<span style="font-family: Papyrus, '+
+                          'fantasy; font-size: 14px; font-variant' +
+                          ':small-caps; text-align: left;">' +
+                          '<b>{} Roll: {}'.format(trait, self.total) +
+                          '</b></span>&nbsp;&nbsp;&nbsp;')
+        self.empty = ('<img src="/staic/images/dice/empty.png" ' +
+                      'style="width:25%;height:25%;">')
+        self.dice_pic = []
+        # print(self.total)
+        self.fig = fig
+        self.ax = ax
 
     def __repr__(self):
         '''
@@ -148,8 +161,41 @@ class Roll(object):
             self.dice_held[n] = self.dice_held[n] + self.dice[n]
             self.get_stats(self.adv)
         else:
-            print(self.dice[n])
-            print(self.dicesides[n])
+            pass
+
+
+    def web_show(self):
+        '''
+        '''
+        self.show_roll = ('<span style="font-family: Papyrus, '+
+                          'fantasy; font-size: 14px; font-variant' +
+                          ':small-caps; text-align: left;"><b>' +
+                          '{} Roll: {}'.format(self.trait, self.total) +
+                          '</b></span>&nbsp;&nbsp;&nbsp;')
+        self.dice_pic = []
+        for i, die in enumerate(self.dice):
+            fnam = ('/static/images/dice/d' + str(self.dicesides[i]) +
+                    '_' + str(self.dice[i]) + '.png')
+            hover = 'Click to Reroll'
+            t = 'r'
+            if int(self.dicesides[i]) == int(die):
+                hover = 'Click to Explode!'
+                t = 'e'
+            self.dice_pic.append('<a href="/reroll{}_{}">'.format(t, i) +
+                                 '<img src="{}" alt="{}" title="{}"'
+                                 .format(fnam, hover, hover) +
+                                 ' style="width:50px;height:50px"></a>')
+        try:
+            a = self.dice_pic[3]
+        except:
+            self.dice_pic.append('<img src="/static/images/dice/empty.png" ' +
+                          'style="width: 25%">')
+        self.results = ('L: {}, M: {}, H: {}, LM: {}, LH: {}, MH: {}, LMH: {}'
+                        .format(self.L, self.M, self.H, self.LM, self.LH,
+                                self.MH, self.LMH))
+        self.empty = ('<img src="/static/images/dice/empty.png" ' +
+                      'style="width:50px;height:50px;">')
+
 
     def show(self, title=''):
         '''
@@ -218,12 +264,4 @@ class Roll(object):
 
 
 if __name__ == "__main__":
-    dice = "3d6"
-    adv = ""
-    if len(sys.argv) > 1:
-        dice = sys.argv[1]
-    if len(sys.argv) > 2:
-        adv = sys.argv[2]
-    a_roll = Roll(dice, adv)
-    a_roll.show()
-    plt.show()
+    pass

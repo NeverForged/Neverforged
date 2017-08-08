@@ -1,3 +1,5 @@
+from Dice import Roll
+from Rules import Rules
 from Database import Database
 from Character_Creation import CharacterCreation
 
@@ -23,9 +25,12 @@ class User(object):
             query = ('INSERT into users (email, pword) ' +
                           'VALUES (\'{}\', \'{}\')'.format(user, pword))
             self.db.query(query)
-            self.user = user
-            self.char = None
-            self.npcs = {}
+        self.user = user
+        self.char = None
+        self.npcs = {}
+        self.roll = Roll('3d6', trait='None')
+        self.roll.web_show()
+        self.rules = Rules()
 
     def new_character(self):
         self.new_char = CharacterCreation(self.user)

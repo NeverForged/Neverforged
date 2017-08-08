@@ -1,3 +1,4 @@
+import codecs
 import sqlite3
 import string
 # -*- coding: utf-8 -*-
