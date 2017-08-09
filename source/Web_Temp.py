@@ -471,6 +471,7 @@ class WebTemp(object):
                 font-size: 14px;
                 border: none;
                 cursor: pointer;
+                background-color: #ffffff
             }
 
             /* The container <div> - needed to position the dropdown content */
@@ -487,8 +488,8 @@ class WebTemp(object):
                 font-family: Georgia, Times, "Times New Roman", serif;
                 font-size: 13px;
                 box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                background-color: #ffffff
                 z-index: 1;
-                background-color: #ffffff;
             }
 
             /* Links inside the dropdown */
@@ -496,8 +497,8 @@ class WebTemp(object):
                 color: black;
                 background-color: #ffffff
                 padding: 5px 5px;
-                max-width: 100%;;
-                min-width: 100%
+                max-width: 100%;
+                min-width: 100%;
                 text-decoration: none;
                 display: block;
             }

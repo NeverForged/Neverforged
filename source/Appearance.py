@@ -1,5 +1,8 @@
+import os
 import math
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 from PIL import Image
 from math import sqrt
 from Database import Database
@@ -8,6 +11,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as image
 from scipy.ndimage import rotate
 from collections import defaultdict
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 class Appearance(object):
     '''
@@ -57,7 +62,9 @@ class Appearance(object):
     43	gloves_actual
     44	gloves_actual
     '''
-    def __init__(self, char, db, ax, specs=''):
+    # TODO - Make sure colors 7 and 8 refer back to materials...
+
+    def __init__(self, char, db, ax, fig):
         self.ax = ax
         self.lst_itms = [1,  # back-center
                          2,  # back-left
@@ -102,89 +109,37 @@ class Appearance(object):
                           39,  # ring, lt
                           43,  # gloves_actual as 24
                           44]  # gloves_actual as 24
-        if char is not None:
-            self.char = char
-            self.db = Database('NeverforgedData')
-            query = ('SELECT x.loc, {}, {}, equipment.color9, equipment.shoulder, '
-                     .format(', '.join(['equipment.mat{}'.format(a)
-                                        for a in range(1, 3)]),
-                             ', '.join(['equipment.app_{}'.format(a)
-                                        for a in range(10)])) +
-                     ' {}, equipment.backx, equipment.backy, equipment.itmx, '
-                     .format(', '.join(['equipment.itm{}'.format(a)
-                                         for a in range(1, 7)])) +
-                     'equipment.itmy FROM equipment JOIN ' +
-                     '(SELECT loc, item FROM PC_inventory WHERE ' +
-                     'character = {} '.format(self.char.id) + 'AND worn = 1) AS x ' +
-                     'ON equipment._id = x.item')
-            items = self.db.query(query)
-            self.items = {}
-            for item in items:
-                self.items[item[0]] = item
-            self.pheno = self.db.query('SELECT pheno FROM PC WHERE _id = {}'
-                                       .format(self.char.id))[0][0]
-            self.hair = self.db.query('SELECT hair_b, hair_0, hair_1 ' +
-                                      'FROM PC WHERE _id={}'.format(self.char.id))[0]
-            self.face = self.db.query('SELECT {} '
-                                      .format(', '.join(['face{}'.format(a)
-                                                         for a in range(5)])) +
-                                      'FROM PC WHERE _id={}'.format(self.char.id))[0]
-        else:  # from roll20
-            self.char = None
-            self.db = Database('NeverforgedData')
-            self.specs = specs
-            print(specs)
-            lst_specs = specs.split('|')
-            # ********* SPECS LISTED ***************
-            self.pheno = lst_specs.pop(0)  # 0
-            hair = []
-            hair.append(self.pheno + 'hair' + lst_specs.pop(0))
-            hair.append(self.pheno + 'hair' + lst_specs.pop(0))
-            hair.append(self.pheno + 'hair' + lst_specs.pop(0))
-            self.hair = tuple(hair)  # 1-3
-            face = []
-            face.append(self.pheno + 'ears' + lst_specs.pop(0))
-            face.append(self.pheno + 'eyes' + lst_specs.pop(0))
-            face.append(self.pheno + 'mouth' + lst_specs.pop(0))
-            face.append(self.pheno + 'ebrow' + lst_specs.pop(0))
-            face.append(self.pheno + 'nose' + lst_specs.pop(0))
-            face.append(lst_specs.pop(0))
-            self.face = tuple(face)  # 4-9
-            self.c_skin = lst_specs.pop(0)  # 10
-            self.c_hair = lst_specs.pop(0)  # 11
-            self.c_eye = lst_specs.pop(0)  # 12
-            cloths = []
-            for i in range(9):
-                cloths.append(lst_specs.pop(0))
-            self.c_clot = tuple(cloths)  #13-21
-
-            # item list....
-            # format |loc-item|
-            # create a list of tuples...
-            self.items = {}
-            print(len(lst_specs), lst_specs)
-            for ab in lst_specs:
-                if len(ab) > 1:
-                    a = ab.split('-')
-                    self.items
-                    query = ('SELECT {}, {}, equipment.color9, equipment.shoulder, '
-                             .format(', '.join(['equipment.mat{}'.format(a)
-                                                for a in range(1, 3)]),
-                                     ', '.join(['equipment.app_{}'.format(a)
-                                                for a in range(10)])) +
-                             ' {}, equipment.backx, equipment.backy, '
-                             .format(', '.join(['equipment.itm{}'.format(a)
-                                                 for a in range(1, 7)])) +
-                            'equipment.itmx, equipment.itmy FROM equipment ' +
-                            'WHERE equipment._id = {}'.format(a[1]))
-                    temp = list(db.query(query))
-                    self.items[int(a[0])] = tuple([a[0]] + temp)
-
-
-        # now the rest....
+        self.fig = fig
+        self.char = char
+        self.db = Database('NeverforgedData')
+        query = ('SELECT x.loc, {}, {}, equipment.color9, equipment.shoulder, '
+                 .format(', '.join(['equipment.mat{}'.format(a)
+                                    for a in range(1, 3)]),
+                         ', '.join(['equipment.app_{}'.format(a)
+                                    for a in range(10)])) +
+                 ' {}, equipment.backx, equipment.backy, equipment.itmx, '
+                 .format(', '.join(['equipment.itm{}'.format(a)
+                                     for a in range(1, 7)])) +
+                 'equipment.itmy FROM equipment JOIN ' +
+                 '(SELECT loc, item FROM PC_inventory WHERE ' +
+                 'character = {} '.format(self.char.id) + 'AND worn = 1) AS x ' +
+                 'ON equipment._id = x.item')
+        items = self.db.query(query)
+        self.items = {}
+        for item in items:
+            self.items[item[0]] = item
+        self.pheno = self.db.query('SELECT pheno FROM PC WHERE _id = {}'
+                                   .format(self.char.id))[0][0]
+        self.hair = self.db.query('SELECT hair_b, hair_0, hair_1 ' +
+                                  'FROM PC WHERE _id={}'.format(self.char.id))[0]
+        self.face = self.db.query('SELECT {} '
+                                  .format(', '.join(['face{}'.format(a)
+                                                     for a in range(6)])) +
+                                  'FROM PC WHERE _id={}'.format(self.char.id))[0]
 
 
 
+        # now the re
         self.angles = {}
         # nXStart = 235, nYStart = 87, nAddFx=-14, 13,  -30, nScalex=-1,
         self.angles[2] = (235, 87, -14, 13, -30.0, -1)
@@ -206,11 +161,55 @@ class Appearance(object):
         self.hide_rt = False
         self.hide_lt = False
 
+    def update_body(self):
+        '''
+        '''
+        self.pheno = self.db.query('SELECT pheno FROM PC WHERE _id = {}'
+                                   .format(self.char.id))[0][0]
+        self.hair = self.db.query('SELECT hair_b, hair_0, hair_1 ' +
+                                  'FROM PC WHERE _id={}'
+                                  .format(self.char.id))[0]
+        self.face = self.db.query('SELECT {} '
+                                  .format(', '.join(['face{}'.format(a)
+                                                     for a in range(6)])) +
+                                  'FROM PC WHERE _id={}'
+                                  .format(self.char.id))[0]
+
+    def update_items(self):
+        '''
+        '''
+        self.items = {}
+        query = ('SELECT x.loc, {}, {}, equipment.color9, equipment.shoulder, '
+                 .format(', '.join(['equipment.mat{}'.format(a)
+                                    for a in range(1, 3)]),
+                         ', '.join(['equipment.app_{}'.format(a)
+                                    for a in range(10)])) +
+                 ' {}, equipment.backx, equipment.backy, equipment.itmx, '
+                 .format(', '.join(['equipment.itm{}'.format(a)
+                                     for a in range(1, 7)])) +
+                 'equipment.itmy FROM equipment JOIN ' +
+                 '(SELECT loc, item FROM PC_inventory WHERE ' +
+                 'character = {} '.format(self.char.id) + 'AND worn = 1) AS x ' +
+                 'ON equipment._id = x.item')
+        items = self.db.query(query)
+        self.items = {}
+        for item in items:
+            self.items[item[0]] = item
 
     def show(self):
         '''
         '''
+        del self.fig
+        del self.ax
+        self.fig, self.ax  = plt.subplots(1, figsize=(4, 6))
+        self.ax.set_axis_off()
+        os.remove('../source/static/images/characters/{}.png'
+                  .format(self.char.name))
         implot = []
+        image = Image.open('../source/static/images/texture/none.png').convert('RGBA')
+        img = Image.new(image.mode, image.size)
+        pix = img.load()
+        canvas = FigureCanvas(self.fig)
         for i in range(1, 45):
             if len(self.args[i]) > 0:
                 draw = True
@@ -225,13 +224,10 @@ class Appearance(object):
                                                          **self.args[i][n+1]))
                         except:
                             print(),
-        if self.char is not None:
-            self.ax.set_title(self.char.name)
-        self.ax.text(50, -595, r'Art from $www.HeroMachine.com$')
-        # plt.savefig('../source/static/source/static/images/' + self.specs + '.png', bbox_inches='tight')
-        self.ax.get_figure().savefig('../source/static/images/temp.png', bbox_inches='tight', dpi=100)
-        if self.char is not None:
-            plt.show()
+        self.fig.canvas.draw()
+        self.fig.savefig('../source/static/images/characters/{}.png'
+                         .format(self.char.name), format='png', frameon=False,
+                         bbox_inches='tight', transparent=True)
 
     def draw_char(self):
         self.set_colors()
@@ -411,6 +407,10 @@ class Appearance(object):
             fname = ('../source/static/images/appearance/nose/{}.png'.format(self.face[4])
                      .replace('G', self.pheno))
             self.draw_full(fname, self.c_skin, exf, 'skin', i, True)
+            fname = ('../source/static/images/appearance/beard/{}.png'.format(self.face[5])
+                     .replace('G', self.pheno))
+            if self.pheno == 'm':
+                self.draw_full(fname, self.c_hair, exf, 'none', i, True)
         elif i == 10:
             if not self.has_helm():
                 fname = ('../source/static/images/appearance/hair/{}.png'.format(self.hair[1])
@@ -470,8 +470,8 @@ class Appearance(object):
             if i == 13:
                  fname = ('../source/static/images/clothes/{}braies.png'.format(self.pheno))
                  self.draw_full(fname, 'xfaf0e6', ext, 'linen', i)
-            if i == 14 and self.pheno == 'f':
-                 fname = ('../source/static/images/clothes/fbra.png')
+            if i == 14:
+                 fname = ('../source/static/images/clothes/{}bra.png'.format(self.pheno))
                  self.draw_full(fname, 'xfaf0e6', ext, 'linen', i)
 
     def draw_full(self, fname, color, ext, mat, i, apnd=False, shld=None):

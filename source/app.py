@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 from Character import Character
 from Appearance import Appearance
 from UserHandler import UserHandler
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, request, jsonify, redirect, Response
+
 
 
 
@@ -19,7 +20,7 @@ uh = UserHandler()
 
 
 app = Flask(__name__)
-
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 @app.route('/', methods=['GET'])
 def index():
@@ -500,10 +501,79 @@ def t_raise(var):
 
 
 @app.route('/appearance-background')
-def app-bg():
+def app_bg():
     '''
     Appearance and Background pages
     '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+        user.char.name
+    except:
+        return redirect('/')
+    user.char.app.show()
+    wb = WebTemp()
+    ret = wb.start
+    ret = ret + ('<center>' +
+                 '<span style="font-family: Papyrus, fantasy; ' +
+                 'font-size: 30px; font-variant: small-caps;"><b>' +
+                 user.char.name + '</b></span></center>')
+    # Traits and Skills...
+    ret = ret + ('''
+                 <table width="100%">
+                 <colgroup><col style="width:50><col style="width:50%;">
+                 </colgroup>
+                 <tr>
+                     <th width=50%><center><span style="font-family: Papyrus,
+                         fantasy; font-size: 24px; font-variant: small-caps;">
+                         <b>- Attributes -</b></span></center></th>
+                     <th width=50%><center><span style="font-family: Papyrus,
+                         fantasy; font-size: 24px; font-variant: small-caps;">
+                         <b>- Appearance -</b></span></center></th>
+                 </tr>
+                 ''') # end headers for stats page
+    # List of things that can be set...
+    ret = ret + '</table>{}'.format(user.char.appearance_selectors())
+    ret = ret + '{}'.format(user.char.appearance_webshow())
+    # Background editing...
+    ret = ret + '''
+                <table width=100%>
+                <tr>
+                    <th><center><span style="font-family: Papyrus,
+                        fantasy; font-size: 24px; font-variant: small-caps;">
+                        <b>- Background -</b></span></center></th>
+                </tr>
+                '''
+    ret = ret + user.char.backgrounds()
+        # done
+    ret = ret + wb.end
+    return ret, 200
+
+@app.route('/set_app_<var>')
+def set_appear(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('=')
+    query = ('UPDATE PC SET {}='.format(lst[0]) +
+                       '\'{}\' WHERE _id={}'.format(lst[1], user.char.id))
+    user.char.db.query(query)
+    user.char.app.update_body()
+    if lst[0] == 'pheno' or lst[0][:3] == 'app':
+        user.char.app.update_items()
+    user.char.app.draw_char()
+    return redirect('/appearance-background')
+
+# No caching at all for API endpoints.
+@app.after_request
+def add_header(response):
+    # response.cache_control.no_store = True
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
 
 if __name__ == '__main__':
 

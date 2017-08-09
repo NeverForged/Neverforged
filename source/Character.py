@@ -1,5 +1,5 @@
 # _*_ coding:utf-8 _*_
-
+import os
 import sys
 import time
 from Dice import Roll
@@ -8,8 +8,6 @@ from Skills import Skills
 from Database import Database
 import matplotlib.pyplot as plt
 from Appearance import Appearance
-
-
 
 class Character(object):
     '''
@@ -75,7 +73,10 @@ class Character(object):
                                     ':small-caps; text-align: left;">' +
                                     '<b>{}'.format(nm) +
                                     '</b></span>&nbsp;&nbsp;&nbsp;')
-
+        self.fig, self.ax = plt.subplots(1, figsize=(4,6))
+        self.app = Appearance(self, self.db, self.ax, self.fig)
+        self.app.show()
+        self.app.draw_char()
         self.trait_table_start = ('<tr><td width="50%"> ' +
                          '<table><colgroup> ' +
                          '<col style="width:20%; text-align: left;"/>' +
@@ -104,7 +105,6 @@ class Character(object):
         self.training_val = ['[&nbsp;&nbsp;][&nbsp;&nbsp;][&nbsp;&nbsp;]',
                              '[&nbsp;&nbsp;][&nbsp;&nbsp;][&nbsp;&nbsp;]',
                              '[&nbsp;&nbsp;][&nbsp;&nbsp;][&nbsp;&nbsp;]']
-
 
     def save(self):
         '''
@@ -158,6 +158,126 @@ class Character(object):
                 self.trait_dice.append(self.trait_dice_dict[trait])
 
 
+    def appearance_selectors(self):
+        '''
+        Makes a list of appearance objects that can be selected...
+        '''
+        sex = self.db.query('SELECT pheno FROM PC WHERE _id={}'
+                              .format(self.id))[0][0]
+        ret = '<table align="left" width=50%>'
+        al = 'style:"width=100%; padding-right:100%;"'
+        lst = (['pheno', 'skin', 'hair_b', 'hair_0', 'face5',
+                'hair_1', 'hair_c', 'face0', 'face3', 'face1',
+                'eye_c', 'face4', 'face2'] +
+               ['app_{}'.format(a)  for a in range(7)])
+        lstn = ['Phenotype', 'Skin Tone', 'Hair - Behind', 'Hair - Main', 'Beard',
+                'Hair - Bangs', 'Hair Color', 'Ears', 'Eyebrows', 'Eyes',
+                'Eye Color', 'Nose', 'Mouth', 'Cloth - 1', 'Cloth - 2',
+                'Cloth - 3', 'Leather - Armor', 'Leather - Accessories',
+                'Metal Accessories', 'Metal Jewelry']
+        for i, item in enumerate(lst):
+            al = ' style="width=100%;"'
+            if i % 2 == 1:
+                al = ' style="width=100%; background-color:#eee;"'
+            if item == 'face5' and sex == 'f':
+                pass
+            else:
+                ret = ret + ('<tr><td{}><div class="dropdown">{}:'
+                             .format(al, lstn[i]) +
+                             '<button class="dropbtn"> {}'
+                             .format(self.db.query('SELECT {} FROM PC WHERE _id={}'
+                                                   .format(item, self.id))[0][0]) +
+                             '</button><div class="dropdown-content">')
+                # Drop-Downs....
+                if item == 'pheno':
+                    ret = ret + ('<a href="/set_app_pheno=f">femanine</a>' +
+                                 '<a href="/set_app_pheno=m">masculine</a>')
+                elif item[-1] == 'c' or item == 'skin':
+                    colors = self.db.query('SELECT name, code FROM colorlists ' +
+                                           'WHERE tags LIKE \'%{}%\''
+                                           .format(item.replace('_c','')))
+                    colors = sorted(colors, key=lambda c:c[0])
+                    for c in colors:
+                        ret = ret + ('<a href="/set_app_{}={}">{}</a>'
+                                     .format(item, c[1], c[0]))
+                elif item[:4] == 'hair' and not item[-1] == 'c':
+                    mdir = '../source/static/images/appearance/hair/'
+                    lsti = os.listdir(mdir)
+                    for im in lsti:
+                        if im[0] == 'f':
+                            im = im.replace('f','G').replace('.png','')
+                            ret = ret + ('<a href="/set_app_{}={}">'
+                                         .format(item, im) +
+                                         '{}</a></span>'
+                                         .format(im.replace("G", sex)))
+
+                elif item[:4] == 'face':
+                    tlst = ['ear', 'eyes', 'mouth', 'ebrow', 'nose', 'beard']
+                    mdir = ('../source/static/images/appearance/{}/'
+                            .format(tlst[int(item[-1])]))
+                    lsti = os.listdir(mdir)
+                    for im in lsti:
+                        if im[0] == 'f' or im[0] == 'b':
+                            im = im.replace('f','G').replace('.png','')
+                            ret = ret + ('<a href="/set_app_{}={}">'
+                                         .format(item, im) +
+                                         '{}</a>'.format(im.replace('G', sex)))
+                elif item[:3] == 'app':
+                    lstc = ['cloth', 'cloth', 'cloth', 'leather', 'leather',
+                            'metal', 'metal']
+                    clr = lstc[int(item[-1])]
+                    colors = self.db.query('SELECT name, code FROM colorlists ' +
+                                           'WHERE tags LIKE \'%{}%\''
+                                           .format(clr))
+                    colors = sorted(colors, key=lambda c:c[0])
+                    for c in colors:
+                        ret = ret + ('<a href="/set_app_{}={}">{}</a>'
+                                     .format(item, c[1], c[0]))
+                ret = ret + '</div></div></td></tr>'
+        ret = ret + '</table>'
+        return ret
+
+    def appearance_webshow(self):
+        self.app.show()
+        self.app.draw_char()
+        return ('<img align="right" src="/static/images/characters/{}.png" '
+                .format(self.name) +
+                ' alt="{}" title="{}" '.format(self.name, self.name) +
+                'width=50% />')
+
+    def backgrounds(self):
+        '''
+        Sets up a way to edit background questions...
+        '''
+        ret = ''
+        ind = '&nbsp;&nbsp;&nbsp;'
+        query = ('SELECT campaign, bg_n, bg_p, bg_s, {} FROM PC WHERE _id={}'
+                 .format(', '.join('q{}'.format(a) for a in range(1, 15)), self.id))
+        stuff = self.db.query(query)[0]
+        lst = (['Campaign', 'Nationality', 'Profession', 'Divine Spark'])
+        lst = lst + list(self.db.query('SELECT question FROM ccquestions')[0])
+        camp = self.db.query('SELECT * FROM campaign WHERE _id={}'
+                            .format(stuff[0]))[0]
+        for i, title in enumerate(lst):
+            al = ' style="width=100%;"'
+            if i % 2 == 1:
+                al = ' style="width=100%; background-color:#eee;"'
+            ret = ret + '<tr><td {}>'.format(al)
+            if i <= 3:
+                ret = ret + ('<div class="dropdownsk><button class="dropbtn"> {}'
+                             .format(title) +
+                             '</button><div class="dropdownsk-content">')
+                if i == 0:
+                    ret = ret + '<b>{}:</b> [{}]</br>'.format(camp[1], camp[-1])
+                    ret = ret + ind + '<i>{}</i>'.format(camp[2])
+                else:
+                    temp = self.db.query()
+                ret = ret + '</div></div>'
+            # ending...
+            ret = ret + '</td></tr>'
+
+
+
 if __name__ == '__main__':
     db = Database('NeverforgedData')
     if len(sys.argv) > 1:
@@ -168,3 +288,4 @@ if __name__ == '__main__':
     app = Appearance(char, char.db, ax)
     app.draw_char()
     app.show()
+    plt.show()
