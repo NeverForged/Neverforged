@@ -13,11 +13,7 @@ from Appearance import Appearance
 from UserHandler import UserHandler
 from flask import Flask, render_template, request, jsonify, redirect, Response
 
-
-
-
 uh = UserHandler()
-
 
 app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -249,9 +245,7 @@ def stats():
                  '<br><br><b><center>- Skill Training - </center></b></span>')
     # Need this list in two places...
     skills = list(user.char.skills.keys())
-    print(skills)
     skills.sort()
-    print(skills)
     for i in range(3):
         al = ''
         if i == 1:
@@ -466,10 +460,8 @@ def rereoll(var):
         return redirect('/')
     lst = var.split('_')
     if lst[0] == 'e':
-        print(lst[1])
         user.roll.explode(int(lst[1]))
     else:
-        print(lst[1])
         user.roll.reroll(int(lst[1]))
     user.roll.web_show()
     return redirect('/stats')
@@ -544,7 +536,7 @@ def app_bg():
                         <b>- Background -</b></span></center></th>
                 </tr>
                 '''
-    ret = ret + user.char.backgrounds()
+    ret = ret + user.char.background_selector()
         # done
     ret = ret + wb.end
     return ret, 200
@@ -565,6 +557,35 @@ def set_appear(var):
         user.char.app.update_items()
     user.char.app.draw_char()
     return redirect('/appearance-background')
+
+@app.route('/update_bg_ans<int:var>')
+def update_bg(var):
+    '''
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    ans = [request.args.get('answer{}'.format(a), ' ') for a in range(1,16)]
+    user.char.db.query('UPDATE PC SET {}'
+                       .format(','.join(['q{}=\'{}\''.format(i + 1, a) for
+                                         i, a in enumerate(ans)])) +
+                       ' WHERE _id={}'.format(user.char.id))
+    return redirect('/appearance-background')
+
+@app.route('/equipmet-inventory')
+def eq_iv():
+    '''
+    Equipment-Iventory-Store Page
+    todo list:
+            equip
+            store
+            split
+            (combine = automatic)
+            
+    '''
+
 
 # No caching at all for API endpoints.
 @app.after_request

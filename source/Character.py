@@ -175,65 +175,65 @@ class Character(object):
                 'Eye Color', 'Nose', 'Mouth', 'Cloth - 1', 'Cloth - 2',
                 'Cloth - 3', 'Leather - Armor', 'Leather - Accessories',
                 'Metal Accessories', 'Metal Jewelry']
+        if sex == 'f':
+            lst.pop(lst.index('face5'))
+            lstn.pop(lstn.index('Beard'))
         for i, item in enumerate(lst):
             al = ' style="width=100%;"'
             if i % 2 == 1:
                 al = ' style="width=100%; background-color:#eee;"'
-            if item == 'face5' and sex == 'f':
-                pass
-            else:
-                ret = ret + ('<tr><td{}><div class="dropdown">{}:'
-                             .format(al, lstn[i]) +
-                             '<button class="dropbtn"> {}'
-                             .format(self.db.query('SELECT {} FROM PC WHERE _id={}'
-                                                   .format(item, self.id))[0][0]) +
-                             '</button><div class="dropdown-content">')
-                # Drop-Downs....
-                if item == 'pheno':
-                    ret = ret + ('<a href="/set_app_pheno=f">femanine</a>' +
-                                 '<a href="/set_app_pheno=m">masculine</a>')
-                elif item[-1] == 'c' or item == 'skin':
-                    colors = self.db.query('SELECT name, code FROM colorlists ' +
-                                           'WHERE tags LIKE \'%{}%\''
-                                           .format(item.replace('_c','')))
-                    colors = sorted(colors, key=lambda c:c[0])
-                    for c in colors:
-                        ret = ret + ('<a href="/set_app_{}={}">{}</a>'
-                                     .format(item, c[1], c[0]))
-                elif item[:4] == 'hair' and not item[-1] == 'c':
-                    mdir = '../source/static/images/appearance/hair/'
-                    lsti = os.listdir(mdir)
-                    for im in lsti:
-                        if im[0] == 'f':
-                            im = im.replace('f','G').replace('.png','')
-                            ret = ret + ('<a href="/set_app_{}={}">'
-                                         .format(item, im) +
-                                         '{}</a></span>'
-                                         .format(im.replace("G", sex)))
+            ret = ret + ('<tr><td{}><div class="dropdown">{}:'
+                         .format(al, lstn[i]) +
+                         '<button class="dropbtn"> {}'
+                         .format(self.db.query('SELECT {} FROM PC WHERE _id={}'
+                                               .format(item, self.id))[0][0]) +
+                         '</button><div class="dropdown-content">')
+            # Drop-Downs....
+            if item == 'pheno':
+                ret = ret + ('<a href="/set_app_pheno=f">femanine</a>' +
+                             '<a href="/set_app_pheno=m">masculine</a>')
+            elif item[-1] == 'c' or item == 'skin':
+                colors = self.db.query('SELECT name, code FROM colorlists ' +
+                                       'WHERE tags LIKE \'%{}%\''
+                                       .format(item.replace('_c','')))
+                colors = sorted(colors, key=lambda c:c[0])
+                for c in colors:
+                    ret = ret + ('<a href="/set_app_{}={}">{}</a>'
+                                 .format(item, c[1], c[0]))
+            elif item[:4] == 'hair' and not item[-1] == 'c':
+                mdir = '../source/static/images/appearance/hair/'
+                lsti = os.listdir(mdir)
+                for im in lsti:
+                    if im[0] == 'f':
+                        im = im.replace('f','G').replace('.png','')
+                        ret = ret + ('<a href="/set_app_{}={}">'
+                                     .format(item, im) +
+                                     '{}</a></span>'
+                                     .format(im.replace("G", sex)))
 
-                elif item[:4] == 'face':
-                    tlst = ['ear', 'eyes', 'mouth', 'ebrow', 'nose', 'beard']
-                    mdir = ('../source/static/images/appearance/{}/'
-                            .format(tlst[int(item[-1])]))
-                    lsti = os.listdir(mdir)
-                    for im in lsti:
-                        if im[0] == 'f' or im[0] == 'b':
-                            im = im.replace('f','G').replace('.png','')
-                            ret = ret + ('<a href="/set_app_{}={}">'
-                                         .format(item, im) +
-                                         '{}</a>'.format(im.replace('G', sex)))
-                elif item[:3] == 'app':
-                    lstc = ['cloth', 'cloth', 'cloth', 'leather', 'leather',
-                            'metal', 'metal']
-                    clr = lstc[int(item[-1])]
-                    colors = self.db.query('SELECT name, code FROM colorlists ' +
-                                           'WHERE tags LIKE \'%{}%\''
-                                           .format(clr))
-                    colors = sorted(colors, key=lambda c:c[0])
-                    for c in colors:
-                        ret = ret + ('<a href="/set_app_{}={}">{}</a>'
-                                     .format(item, c[1], c[0]))
-                ret = ret + '</div></div></td></tr>'
+            elif item[:4] == 'face':
+                tlst = ['ear', 'eyes', 'mouth', 'ebrow', 'nose', 'beard']
+                mdir = ('../source/static/images/appearance/{}/'
+                        .format(tlst[int(item[-1])]))
+                lsti = os.listdir(mdir)
+                for im in lsti:
+                    if im[0] == 'f' or im[0] == 'b':
+                        im = im.replace('f','G').replace('.png','')
+                        ret = ret + ('<a href="/set_app_{}={}">'
+                                     .format(item, im) +
+                                     '{}</a>'.format(im.replace('G', sex)))
+            elif item[:3] == 'app':
+                lstc = ['cloth', 'cloth', 'cloth', 'leather', 'leather',
+                        'metal', 'metal']
+                clr = lstc[int(item[-1])]
+                colors = self.db.query('SELECT name, code FROM colorlists ' +
+                                       'WHERE tags LIKE \'%{}%\''
+                                       .format(clr))
+                colors = sorted(colors, key=lambda c:c[0])
+                for c in colors:
+                    ret = ret + ('<a href="/set_app_{}={}">{}</a>'
+                                 .format(item, c[1], c[0]))
+            ret = ret + '</div></div></td></tr>'
         ret = ret + '</table>'
         return ret
 
@@ -245,37 +245,56 @@ class Character(object):
                 ' alt="{}" title="{}" '.format(self.name, self.name) +
                 'width=50% />')
 
-    def backgrounds(self):
+    def background_selector(self):
         '''
         Sets up a way to edit background questions...
         '''
         ret = ''
         ind = '&nbsp;&nbsp;&nbsp;'
         query = ('SELECT campaign, bg_n, bg_p, bg_s, {} FROM PC WHERE _id={}'
-                 .format(', '.join('q{}'.format(a) for a in range(1, 15)), self.id))
+                 .format(', '.join(['q{}'.format(a) for a in range(1, 16)]), self.id))
         stuff = self.db.query(query)[0]
         lst = (['Campaign', 'Nationality', 'Profession', 'Divine Spark'])
-        lst = lst + list(self.db.query('SELECT question FROM ccquestions')[0])
+        lst = lst + [a[0] for a in
+                            self.db.query('SELECT question FROM ccquestions')]
         camp = self.db.query('SELECT * FROM campaign WHERE _id={}'
                             .format(stuff[0]))[0]
+        lst = lst + [camp[3]]
+        lste = ['', '', '', '']
+        lste = lste + [a[0] for a in
+                        self.db.query('SELECT explanation FROM ccquestions')]
+        lste = lste + [camp[4]]
         for i, title in enumerate(lst):
             al = ' style="width=100%;"'
             if i % 2 == 1:
                 al = ' style="width=100%; background-color:#eee;"'
             ret = ret + '<tr><td {}>'.format(al)
             if i <= 3:
-                ret = ret + ('<div class="dropdownsk><button class="dropbtn"> {}'
+                ret = ret + ('<div class="dropdownsk"><button class="dropbtn"> {}'
                              .format(title) +
                              '</button><div class="dropdownsk-content">')
                 if i == 0:
-                    ret = ret + '<b>{}:</b> [{}]</br>'.format(camp[1], camp[-1])
+                    ret = ret + '<b>{}:</b> [{}]<br>'.format(camp[1], camp[-1])
                     ret = ret + ind + '<i>{}</i>'.format(camp[2])
                 else:
-                    temp = self.db.query()
+                    tp = self.db.query('SELECT * FROM backgrounds WHERE _id={}'
+                                       .format(stuff[i]))[0]
+                    ret = ret + ind + '<b>{}</b> [{}]<br>'.format(tp[2], tp[3])
+                    ret = ret + ind + '<i>{}</i>'.format(tp[4])
                 ret = ret + '</div></div>'
-            # ending...
-            ret = ret + '</td></tr>'
-
+            else:
+                ret = ret + '<b>{}</b><br>'.format(title)
+                ret = ret + ind + '<i>{}</i><br>'.format(lste[i])
+                ret = ret + ('<center><form action="/update_bg_ans{}">'
+                             .format(i - 3) +
+                             '<p><textarea name="answer{}"'.format(i - 3)  +
+                             ' rows="5" cols="90">' +
+                             '{}</textarea></p>'.format(stuff[i]))
+        ret = ret + ('<br><input type="submit" ' +
+                     'value="Update Answers"><center>')
+        # ending...
+        ret = ret + '</td></tr>'
+        return ret
 
 
 if __name__ == '__main__':

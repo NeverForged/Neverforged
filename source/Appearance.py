@@ -203,8 +203,11 @@ class Appearance(object):
         del self.ax
         self.fig, self.ax  = plt.subplots(1, figsize=(4, 6))
         self.ax.set_axis_off()
-        os.remove('../source/static/images/characters/{}.png'
-                  .format(self.char.name))
+        try:
+            os.remove('../source/static/images/characters/{}.png'
+                      .format(self.char.name))
+        except:
+            pass
         implot = []
         image = Image.open('../source/static/images/texture/none.png').convert('RGBA')
         img = Image.new(image.mode, image.size)
