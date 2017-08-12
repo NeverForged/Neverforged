@@ -97,18 +97,18 @@ def make_char(var):
         user = uh.user_d[ip]
     except:
         return redirect('/')
-    print(user)
+    # print(user)
     lst = ['S', 'D', 'F', 'C', 'I', 'W']
     trt_adds = []
     for item in lst:
         try:
             trt_adds.append(int(request.args.get(item, None)))
-            print(trt_adds)
+            # print(trt_adds)
         except:
             trt_adds.append(0)
-    print(trt_adds)
+    # print(trt_adds)
     try:
-        ans = request.args.get('answer', None)
+        ans = request.args.get('answer', '').replace(';',',')
     except:
         ans = ''
     try:
@@ -123,7 +123,7 @@ def make_char(var):
         cc = user.new_char
     except:
         cc = user.new_character()
-        print(type(cc))
+        # print(type(cc))
     resp = cc.var(var, trt_adds, ans, filt, name)
     if resp[:4] == '_red':
         return redirect (resp.replace('_red', ''))
@@ -491,7 +491,6 @@ def t_raise(var):
     user.char = Character(char_type='PC', sql_id=char_id, db=db)
     return redirect('/stats')
 
-
 @app.route('/appearance-background')
 def app_bg():
     '''
@@ -537,7 +536,7 @@ def app_bg():
                 </tr>
                 '''
     ret = ret + user.char.background_selector()
-        # done
+    # done
     ret = ret + wb.end
     return ret, 200
 
@@ -552,7 +551,8 @@ def set_appear(var):
     query = ('UPDATE PC SET {}='.format(lst[0]) +
                        '\'{}\' WHERE _id={}'.format(lst[1], user.char.id))
     user.char.db.query(query)
-    user.char.app.update_body()
+    if lst[0][:3] != 'app':
+        user.char.app.update_body()
     if lst[0] == 'pheno' or lst[0][:3] == 'app':
         user.char.app.update_items()
     user.char.app.draw_char()
@@ -574,7 +574,7 @@ def update_bg(var):
                        ' WHERE _id={}'.format(user.char.id))
     return redirect('/appearance-background')
 
-@app.route('/equipmet-inventory')
+@app.route('/equipment-inventory')
 def eq_iv():
     '''
     Equipment-Iventory-Store Page
@@ -583,9 +583,174 @@ def eq_iv():
             store
             split
             (combine = automatic)
-            
-    '''
 
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+        user.char.name
+    except:
+        return redirect('/')
+    user.char.equip.update_items()
+    user.char.app.show()
+    wb = WebTemp()
+    ret = wb.start
+
+    ret = ret + ('<center>' +
+                 '<span style="font-family: Papyrus, fantasy; ' +
+                 'font-size: 30px; font-variant: small-caps;"><b>' +
+                 user.char.name + '</b></span></center>')
+    ret = ret + '{}'.format(user.char.appearance_webshow_2())
+    # Traits and Skills...
+    ret = ret + '''
+                 <table width="50%">
+                 <tr>
+                     <th width=100%><center><span style="font-family: Papyrus,
+                         fantasy; font-size: 24px; font-variant: small-caps;">
+                         <b>- Equipment -</b></span></center></th>
+                 </tr>
+                 ''' # end headers for stats page
+    ret = ret + '<tr><td>'
+    ret = ret + user.char.equip.display_equipment()
+    ret = ret + '</td></tr></table>'
+    # Inventory and Store
+    ret = ret + ('''
+                 <table width="100%">
+                 <colgroup><col style="width:50><col style="width:50%;">
+                 </colgroup>
+                 <tr>
+                     <th width=50%><center><span style="font-family: Papyrus,
+                         fantasy; font-size: 24px; font-variant: small-caps;">
+                         <b>- Add & Purchase Items -</b></span></center></th>
+                     <th width=50%><center><span style="font-family: Papyrus,
+                         fantasy; font-size: 24px; font-variant: small-caps;">
+                         <b>- Inventory -</b></span></center></th>
+                 </tr>
+                 ''')
+    ret = ret + '<tr><td>'
+    ret = ret + user.char.equip.display_store()
+    ret = ret + '</td><td>'
+    ret = ret + user.char.equip.display_inventory()
+    # DONE
+    ret = ret + wb.end
+    return ret, 200
+
+@app.route('/equip_<var>')
+def equip(var):
+    '''
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+        user.char.name
+    except:
+        return redirect('/')
+    print(var)
+    lst = var.split('_')
+    user.char.equip.equip_item_slot(lst[0], lst[1])
+    user.char.app.update_items()
+    user.char.app.draw_char()
+    user.char.app.show()
+    return redirect('/equipment-inventory')
+
+@app.route('/store_filter')
+def get_store_filter():
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    filt = request.args.get('filter', '')
+    user.char.equip.filter = filt
+    return redirect('/equipment-inventory')
+
+@app.route('/store_tags_<var>')
+def set_store_tags(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    user.char.equip.tags = var
+    return redirect('/equipment-inventory')
+
+@app.route('/store_prop_<var>')
+def set_store_prop(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    user.char.equip.prop = var
+    return redirect('/equipment-inventory')
+
+@app.route('/additem_<var>')
+def additem(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    user.db.add_item(int(lst[0]), user.char.id, int(lst[1]))
+    return redirect('/equipment-inventory')
+
+@app.route('/buyitem_<var>')
+def buyitem(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    user.char.equip.buy_item(int(lst[0]), int(lst[1]), int(lst[2]))
+    return redirect('/equipment-inventory')
+
+@app.route('/del_1item_<var>')
+def del_1item(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    user.char.equip.delete_1item(lst[0], lst[1])
+    return redirect('/equipment-inventory')
+
+@app.route('/del_allitem_<var>')
+def del_allitem(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    user.char.equip.delete_allitem(lst[0], lst[1])
+    return redirect('/equipment-inventory')
+
+@app.route('/split_item_<var>')
+def split_item(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    print(lst)
+    user.char.equip.split_stack(lst[0], lst[1], lst[2])
+    return redirect('/equipment-inventory')
+
+@app.route('/moveitem_<var>')
+def moveitem(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    print(lst)
+    user.char.equip.move_item(lst[0], lst[1], lst[2], lst[3])
+    return redirect('/equipment-inventory')
 
 # No caching at all for API endpoints.
 @app.after_request
@@ -597,5 +762,5 @@ def add_header(response):
     return response
 
 if __name__ == '__main__':
-
-     app.run(host='0.0.0.0', port=8888, debug=True)
+    app.jinja_env.cache = {}
+    app.run(host='0.0.0.0', port=8888, threaded=True, debug=True)

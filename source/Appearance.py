@@ -231,6 +231,7 @@ class Appearance(object):
         self.fig.savefig('../source/static/images/characters/{}.png'
                          .format(self.char.name), format='png', frameon=False,
                          bbox_inches='tight', transparent=True)
+        return 1
 
     def draw_char(self):
         self.set_colors()

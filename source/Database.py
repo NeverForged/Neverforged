@@ -21,17 +21,18 @@ class Database(object):
         '''
         initializer, opens the database connection.
         '''
-        self.connection = sqlite3.connect('../sql/' + file_name)
+        self.name = file_name
 
     def query(self, query):
         '''
         Input some SQL code in query, get the results in a return
         '''
-        print(query)
-        cursor = self.connection.cursor()
+        # print(query)
+        connection = sqlite3.connect('../sql/' + self.name)
+        cursor = connection.cursor()
         cursor.execute(query)
         if 'INSERT' in query or 'REPLACE' in query or 'UPDATE' in query:
-            return self.connection.commit()
+            return connection.commit()
         else:
             return cursor.fetchall()
 
@@ -75,7 +76,7 @@ class Database(object):
                                .format(_id, char, item, loc, stack))
                 i += 1
                 tqt = tqt - stack
-            if tqt >= 0:
+            if tqt > 0:
                 if len(nums) >= i + 1:
                     _id = nums[i]
                     self.query('UPDATE PC_inventory ' +
@@ -92,7 +93,7 @@ class Database(object):
                                'VALUES ({}, {}, {}, {}, 0, {})'
                                .format(_id, char, item, loc, tqt))
         else:
-            while qt >= 0:
+            while qt > 0:
                 _id = int(self.query('SELECT _id FROM PC_inventory ' +
                                      'GROUP BY _id  ORDER BY _id '
                                      'DESC LIMIT 1')[0][0]) + 1

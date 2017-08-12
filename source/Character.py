@@ -6,6 +6,7 @@ from Dice import Roll
 from Wounds import Wound
 from Skills import Skills
 from Database import Database
+from Equipment import Equipment
 import matplotlib.pyplot as plt
 from Appearance import Appearance
 
@@ -105,6 +106,7 @@ class Character(object):
         self.training_val = ['[&nbsp;&nbsp;][&nbsp;&nbsp;][&nbsp;&nbsp;]',
                              '[&nbsp;&nbsp;][&nbsp;&nbsp;][&nbsp;&nbsp;]',
                              '[&nbsp;&nbsp;][&nbsp;&nbsp;][&nbsp;&nbsp;]']
+        self.equip = Equipment(self)
 
     def save(self):
         '''
@@ -241,6 +243,14 @@ class Character(object):
         self.app.show()
         self.app.draw_char()
         return ('<img align="right" src="/static/images/characters/{}.png" '
+                .format(self.name) +
+                ' alt="{}" title="{}" '.format(self.name, self.name) +
+                'width=50% />')
+
+    def appearance_webshow_2(self):
+        self.app.show()
+        self.app.draw_char()
+        return ('<img align="left" src="/static/images/characters/{}.png" '
                 .format(self.name) +
                 ' alt="{}" title="{}" '.format(self.name, self.name) +
                 'width=50% />')
