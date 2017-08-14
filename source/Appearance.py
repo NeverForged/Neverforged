@@ -157,7 +157,7 @@ class Appearance(object):
         self.angles[41] = (125, 298, 0, 0, 85, -1)
 
         self.args = defaultdict(list)
-        self.args[31] = [0,0,0,0,0,0]
+        self.args[31] = [0, 0, 0, 0, 0, 0]
         self.hide_rt = False
         self.hide_lt = False
 
@@ -201,6 +201,7 @@ class Appearance(object):
         '''
         del self.fig
         del self.ax
+        self.new = 1;
         self.fig, self.ax  = plt.subplots(1, figsize=(4, 6))
         self.ax.set_axis_off()
         try:
@@ -231,6 +232,7 @@ class Appearance(object):
         self.fig.savefig('../source/static/images/characters/{}.png'
                          .format(self.char.name), format='png', frameon=False,
                          bbox_inches='tight', transparent=True)
+        self.fig.clear()
         return 1
 
     def draw_char(self):
@@ -489,7 +491,7 @@ class Appearance(object):
                 idx = (shld*2) - 2
                 self.args[31][idx] = img
                 self.args[31][(shld*2) - 1] = dict(aspect='equal', extent=ext)
-            if apnd:
+            elif apnd:
                 self.args[i].append(img)
                 self.args[i].append(dict(aspect='equal', extent=ext))
             else:

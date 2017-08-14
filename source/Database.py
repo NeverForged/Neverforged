@@ -31,7 +31,8 @@ class Database(object):
         connection = sqlite3.connect('../sql/' + self.name)
         cursor = connection.cursor()
         cursor.execute(query)
-        if 'INSERT' in query or 'REPLACE' in query or 'UPDATE' in query:
+        if ('INSERT' in query or 'REPLACE' in query or 'UPDATE' in query or
+           'DELETE' in query):
             return connection.commit()
         else:
             return cursor.fetchall()

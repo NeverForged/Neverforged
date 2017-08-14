@@ -242,16 +242,16 @@ class Character(object):
     def appearance_webshow(self):
         self.app.show()
         self.app.draw_char()
-        return ('<img align="right" src="/static/images/characters/{}.png" '
-                .format(self.name) +
+        return ('<img align="right" src="/static/images/characters/{}.png'
+                .format(self.name) + '?dummy={}" '.format(time.clock()) +
                 ' alt="{}" title="{}" '.format(self.name, self.name) +
                 'width=50% />')
 
     def appearance_webshow_2(self):
         self.app.show()
         self.app.draw_char()
-        return ('<img align="left" src="/static/images/characters/{}.png" '
-                .format(self.name) +
+        return ('<img align="left" src="/static/images/characters/{}.png'
+                .format(self.name) + '?dummy={}" '.format(time.clock()) +
                 ' alt="{}" title="{}" '.format(self.name, self.name) +
                 'width=50% />')
 

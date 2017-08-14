@@ -1,3 +1,4 @@
+from Dice import Roll
 from collections import defaultdict
 
 
@@ -11,6 +12,7 @@ class Equipment(object):
         '''
         Initializer...
         '''
+        self.char = char
         self.char_id = char.id
         self.char_s = char.trait_values[0]
         self.db = char.db
@@ -204,24 +206,27 @@ class Equipment(object):
         if item[3] != 0:
             ret = ret + ind + ind + '<i>({})</i><br>'.format(item[3])
         ret = ret + ind + ind + '<i>{}</i><br><br>'.format(item[8])
-        if qt == 1:
-            ret = ret + ('<a href="/del_allitem_{}_{}"><center>- Delete {} -'
-                         .format(item[0], loc, item[1]) + '</center></a>')
+        if int(qt) == 1:
+            ret = ret + ('<a href="/del_allitem_{}_{}_{}"><center>- Delete {} -'
+                         .format(item[0], loc, qt, item[1]) + '</center></a>')
         else:
             ret = ret + ('<a href="/del_1item_{}_{}"><center>- Delete 1 {} -'
                          .format(item[0], loc, item[1]) + '</center></a>')
-            ret = ret + ('<a href="/del_allitem_{}_{}"><center>- Delete all {}s -'
-                         .format(item[0], loc, item[1]) + '</center></a>')
-        ret = ret + ('<a href="/split_item_{}_{}_{}">'.format(item[0], qt, loc) +
-                     '<center>- Split Stack -</center></a>')
+            ret = ret + ('<a href="/del_allitem_{}_{}_{}"><center>'
+                         .format(item[0], loc, qt) +
+                         '- Delete all {}s -</center></a>'.format(item[1]))
+            ret = ret + ('<a href="/split_item_{}_{}_{}">'.format(item[0], qt, loc) +
+                         '<center>- Split Stack -</center></a>')
         for cont in self.containers:
-            locname = self.db.query('SELECT name FROM inventory_slots ' +
-                                    'WHERE slot={}'.format(cont[2]))[0][0]
-            ret = ret + ('<a href="/moveitem_{}_{}_{}_{}">'
-                        .format(item[0], qt, loc, cont[2]) +
-                        '<center> - Move to {} ({}) -</center></a>'
-                        .format(cont[3], locname))
-
+            if int(loc) != int(cont[2]):
+                locname = self.db.query('SELECT name FROM inventory_slots ' +
+                                        'WHERE slot={}'.format(cont[2]))[0][0]
+                ret = ret + ('<a href="/moveitem_{}_{}_{}_{}">'
+                            .format(item[0], qt, loc, cont[2]) +
+                            '<center> - Move to {} ({}) -</center></a>'
+                            .format(cont[3], locname))
+        ret = ret + ('<a href="/sell_item_{}_{}_{}"><center>- Sell {} -'
+                     .format(item[0], qt, loc, item[1]) + '</a></center>')
         return ret + '</div></div></td></tr>'
 
     def display_store(self):
@@ -385,7 +390,8 @@ class Equipment(object):
                           .format(self.char_id) +
                           'AND item={}'.format(item_id))
 
-    def buy_item(self, item_id, item_qt, cost):
+
+    def give_change(self, new_wealth):
         '''
         '''
         # get table_id of all money... and order by qt...
@@ -399,24 +405,39 @@ class Equipment(object):
                             'ORDER BY PC_inventory.qt')
         # delete them all..
         for ID in ids:
-            query = ('DELETE FROM PC_inventory WHERE _id={}'.format(ID[0]))
+            query = ('DELETE FROM PC_inventory WHERE _id=\'{}\''.format(ID[0]))
             self.db.query(query)
+        print(self.db.query('SELECT PC_inventory._id, PC_inventory.loc, ' +
+                            'PC_inventory.qt FROM PC_inventory ' +
+                            'JOIN (SELECT _id FROM equipment WHERE '+
+                            '      tags like \'%money%\') as cash ' +
+                            'ON PC_inventory.item = cash._id ' +
+                            'WHERE character={} '.format(self.char_id) +
+                            'GROUP BY PC_inventory.qt ' +
+                            'ORDER BY PC_inventory.qt'))
         # remove cosst from wealth
-        self.wealth = self.wealth - cost
+        self.wealth = new_wealth
         # add money back based on cost...
         money = self.db.query('SELECT cost, _id FROM equipment ' +
                               'WHERE tags LIKE \'%money%\' ' +
                               'GROUP BY cost ' +
-                              'ORDER BY cost ')
+                              'ORDER BY cost DESC')
+
         for coin in money:
+            print(coin)
             add_coins = int(self.wealth / coin[0])
+            print(add_coins)
             if add_coins >= 1:
                 self.db.add_item(coin[1], self.char_id, add_coins, ids[0][1])
             # pence will divide evenly, so this should work out fine...
             self.wealth = self.wealth - add_coins*coin[0]
 
-        self.db.add_item(item_id, self.char_id, item_qt, 0)
 
+    def buy_item(self, item_id, item_qt, cost):
+        '''
+        '''
+        self.give_change(self.wealth - cost)
+        self.db.add_item(item_id, self.char_id, item_qt, 0)
 
     def delete_1item(self, item, loc):
         '''
@@ -427,13 +448,13 @@ class Equipment(object):
                               .format(item, self.char_id, loc))[0]
         if int(query[1]) >= 2:
              self.db.query('UPDATE PC_inventory SET qt={} '
-                           .format(int(query[1]) - 1) + 'WHERE _id={} '
+                           .format(int(query[1]) - 1) + 'WHERE _id=\'{}\' '
                            .format(query[0]))
         else:
-            self.db.query('DELETE FROM PC_inventory WHERE _id={}'
+            self.db.query('DELETE FROM PC_inventory WHERE _id=\'{}\''
                           .format(query[0]))
 
-    def delete_allitem(self, item, loc):
+    def delete_allitem(self, item, loc, qt):
         query = ('DELETE FROM PC_inventory WHERE _id IN ' +
                       '(SELECT _id FROM PC_inventory ' +
                       ' WHERE item={} AND character={} AND loc={} LIMIT 1)'
@@ -467,3 +488,70 @@ class Equipment(object):
                                .format(item, qt, loc))[0][0]
         self.db.query('UPDATE PC_inventory SET loc={} '.format(newloc) +
                       'WHERE _id={}'.format(inv_id))
+
+    def sell_item(self, itm_id, qt, loc):
+        '''
+        Sells the item, which requires:
+        -getting the item cost & type
+        -determing the sale price (and rolling the barter check)
+        -deleting the item
+        -giving the player the money
+
+
+       Untrained 5*L % of the value of the goods, with an upper limit of 80%.
+            treasure have an upper limit of 100%.
+       Trained:e= 5*H% when selling. Treasure
+                maximum of 110% of actual value.
+       Apprentice: Receive 5*LH%. Treasure
+                maximum of 120% of actual value.
+       Journeyman: Receive 5*MH%. Treasure
+                maximum of 130% of actual value.
+       Master: Receive 5*LMH%. Treasure
+                maximum of 140% of actual value.
+        '''
+        # cost and type
+        value = self.db.query('SELECT cost, tags FROM equipment ' +
+                              'WHERE _id={}'.format(itm_id))[0]
+        # Barter Time!
+        # lowest of Charisma/Intelligence
+        lst = [4, '']
+        if self.char.trait_values[5] < self.char.trait_values[4]:
+            lst = [5, '']  # Int is lower
+        trts = ['Strength', 'Dexterity', 'Fortitude',
+                'Charisma', 'Intelligence', 'Willpower']
+        self.char.roll = Roll(self.char.trait_dice[int(lst[0])], lst[1],
+                         trts[int(lst[0])])
+        self.char.roll.web_show()
+        # percentage based on roll and skill... barter is 79
+        try:
+            lev = self.char.skill[79][-1]
+        except:
+            lev = 0
+        if lev == 0:
+            per = 0.05 * self.char.roll.L
+            mt = 1
+        elif lev == 1:
+            per = 0.05 * self.char.roll.H
+            mt = 1.1
+        elif lev == 2:
+            per = 0.05 * self.char.roll.LH
+            mt = 1.2
+        elif lev == 3:
+            per = 0.05 * self.char.roll.MH
+            mt = 1.3
+        elif lev == 4:
+            per = 0.05 * self.char.roll.LMH
+            mt = 1.4
+
+        # get amount to give...
+        if 'treasure' in value[1]:
+            if per >= mt:
+                per = mt
+        elif 'money' in value:
+            per = 1.0  # can't sell money....
+        else:
+            if per >= 0.8:
+                per = 0.8
+        profit = int(float(value[0]) * float(qt) * per)
+        self.delete_allitem(itm_id, loc, qt)
+        self.give_change(self.wealth + profit)

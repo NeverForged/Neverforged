@@ -14,7 +14,6 @@ from UserHandler import UserHandler
 from flask import Flask, render_template, request, jsonify, redirect, Response
 
 uh = UserHandler()
-
 app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
@@ -76,10 +75,14 @@ def user_check():
     Extract user name and info...
     email=ss&pword=ss
     '''
+    print('checking...')
     email = request.args.get('email', None)
+    print('email')
     pword = request.args.get('pword', None)
     ip = request.remote_addr
+    print(ip)
     uh.add(email, pword, ip)
+    print(email)
     return redirect('/')
 
 @app.route('/create<var>', methods=['GET','POST'])
@@ -725,7 +728,7 @@ def del_allitem(var):
     except:
         return redirect('/')
     lst = var.split('_')
-    user.char.equip.delete_allitem(lst[0], lst[1])
+    user.char.equip.delete_allitem(lst[0], lst[1], lst[2])
     return redirect('/equipment-inventory')
 
 @app.route('/split_item_<var>')
@@ -752,14 +755,25 @@ def moveitem(var):
     user.char.equip.move_item(lst[0], lst[1], lst[2], lst[3])
     return redirect('/equipment-inventory')
 
+@app.route('/sell_item_<var>')
+def sell_item(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst =  var.split('_')
+    user.char.equip.sell_item(lst[0], lst[1], lst[2])
+    return redirect('/equipment-inventory')
+
 # No caching at all for API endpoints.
-@app.after_request
-def add_header(response):
-    # response.cache_control.no_store = True
-    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '-1'
-    return response
+# @app.after_request
+# def add_header(response):
+#     # response.cache_control.no_store = True
+#     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+#     response.headers['Pragma'] = 'no-cache'
+#     response.headers['Expires'] = '-1'
+#     return response
 
 if __name__ == '__main__':
     app.jinja_env.cache = {}
