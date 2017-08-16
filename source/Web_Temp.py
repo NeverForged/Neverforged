@@ -414,11 +414,27 @@ class WebTemp(object):
                 cursor: pointer;
             }
 
+
+             /* Dropdown Button */
+            .dropbtn-wd {
+                padding: 1px;
+                font-family: Georgia, Times, "Times New Roman", serif;
+                font-weight: bold;
+                font-size: 14px;
+                border: none;
+                cursor: pointer;
+                text-algn: right;
+                font-variant: small-caps;
+                font-size: 125%;
+                float: right;
+            }
+
             /* The container <div> - needed to position the dropdown content */
             .dropdown {
                 position: relative;
                 display: inline-block;
             }
+
 
             /* Dropdown Content (Hidden by Default) */
             .dropdown-content {
@@ -433,22 +449,55 @@ class WebTemp(object):
                 background-color: #ffffff;
             }
 
+            /* Dropdown Content (Hidden by Default) */
+            .dropdown-contentwd {
+                display: none;
+                position: relative;
+                font-family: Georgia, Times, "Times New Roman", serif;
+                font-size: 13px;
+                text-align: right;
+                float: left;
+                box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                z-index: 1;
+                background-color: #ffffff;
+            }
+
+
             /* Links inside the dropdown */
             .dropdown-content a {
                 color: black;
                 background-color: #ffffff
                 padding: 5px 5px;
-                max-width: 100%;;
-                min-width: 100%
+                max-width: 100%;
+                min-width: 100%;
+                text-decoration: none;
+                display: block;
+            }
+
+            /* Links inside the dropdown */
+            .dropdown-contentwd a {
+                color: black;
+                float: right;
+                background-color: #ffffff
+                padding: 5px 5px;
+                max-width: 100%;
+                min-width: 100%;
                 text-decoration: none;
                 display: block;
             }
 
             /* Change color of dropdown links on hover */
             .dropdown-content a:hover {color: white; background-color: black}
+            .dropdown-contentwd a:hover {color: white; background-color: black}
+
 
             /* Show the dropdown menu on hover */
             .dropdown:hover .dropdown-content {
+                display: block;
+            }
+
+            /* Show the dropdown menu on hover */
+            .dropdown:hover .dropdown-contentwd {
                 display: block;
             }
 

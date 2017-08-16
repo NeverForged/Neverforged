@@ -93,12 +93,12 @@ class Equipment(object):
             name = ('<div style="text-align:center;">{}<div>'
                     .format(name))
             # label of item in slot...
-            ret = ret + ('<td><div class="dropdown">' +
+            ret = ret + ('<td {}><div class="dropdown">'.format(al) +
                          '<button class="dropbtn">{}</button>'
                          .format(name) +
                          '<div class="dropdown-content">')
             if check == 1:
-                ret = ret + ('<a href="equip_{}_{}">'
+                ret = ret + ('<a href="equip_item_{}_{}">'
                              .format('X', slot[1]) +
                              '-clear-</a>')
             for item in self.item_locations[str(slot[1])]:
@@ -106,11 +106,10 @@ class Equipment(object):
                                       'FROM equipment ' +
                                       'WHERE _id = {}'
                                       .format(item))[0][0]
-                ret = ret + ('<a href="equip_{}_{}">'
+                ret = ret + ('<a href="equip_item_{}_{}">'
                              .format(item, slot[1]) +
                              '{}</a>'.format(it_nm))
 
-            ret = ret + '</div></div></td></tr>'
 
         ret = ret + "</table>"
         return ret
@@ -359,12 +358,15 @@ class Equipment(object):
                          .format(item[0], item[6]) +
                          '- click to ADD {} {} to Inventory -</a>'
                          .format(item[6], item[1]) + '</center>')
-            if item[4] <= self.wealth:
-                ret = ret + ('<center><a href="/buyitem_{}_{}_{}">'
-                             .format(item[0], item[6], item[4]) +
-                             '- click to BUY {} {} for {} pence -</a>'
-                             .format(item[6], item[1], item[4]) +
-                              '</center>')
+            try:
+                if item[4] <= self.wealth:
+                    ret = ret + ('<center><a href="/buyitem_{}_{}_{}">'
+                                .format(item[0], item[6], item[4]) +
+                                '- click to BUY {} {} for {} pence -</a>'
+                                .format(item[6], item[1], item[4]) +
+                                '</center>')
+            except:
+                pass
             ret = ret + '</div></div></td></tr>'
         return ret + '</table>'
 
@@ -403,9 +405,11 @@ class Equipment(object):
                             'WHERE character={} '.format(self.char_id) +
                             'GROUP BY PC_inventory.qt ' +
                             'ORDER BY PC_inventory.qt')
+        print(ids)
         # delete them all..
         for ID in ids:
-            query = ('DELETE FROM PC_inventory WHERE _id=\'{}\''.format(ID[0]))
+            print(ID[0])
+            query = ('DELETE FROM PC_inventory WHERE _id={}'.format(ID[0]))
             self.db.query(query)
         print(self.db.query('SELECT PC_inventory._id, PC_inventory.loc, ' +
                             'PC_inventory.qt FROM PC_inventory ' +
@@ -514,9 +518,9 @@ class Equipment(object):
                               'WHERE _id={}'.format(itm_id))[0]
         # Barter Time!
         # lowest of Charisma/Intelligence
-        lst = [4, '']
-        if self.char.trait_values[5] < self.char.trait_values[4]:
-            lst = [5, '']  # Int is lower
+        lst = [3, '']
+        if self.char.trait_values[4] < self.char.trait_values[3]:
+            lst = [4, '']  # Int is lower
         trts = ['Strength', 'Dexterity', 'Fortitude',
                 'Charisma', 'Intelligence', 'Willpower']
         self.char.roll = Roll(self.char.trait_dice[int(lst[0])], lst[1],

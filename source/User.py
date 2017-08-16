@@ -20,7 +20,7 @@ class User(object):
                 self.char = None
                 self.npcs = {}
             else:
-             raise Exception('Incorrect Password')
+             raise Exception
         else:
             query = ('INSERT into users (email, pword) ' +
                           'VALUES (\'{}\', \'{}\')'.format(user, pword))

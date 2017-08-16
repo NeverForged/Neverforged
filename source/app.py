@@ -5,6 +5,7 @@ import matplotlib
 matplotlib.use('Agg')
 from User import User
 from Dice import Roll
+from Wounds import Wound
 from Web_Temp import WebTemp
 from Database import Database
 import matplotlib.pyplot as plt
@@ -15,7 +16,6 @@ from flask import Flask, render_template, request, jsonify, redirect, Response
 
 uh = UserHandler()
 app = Flask(__name__)
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 @app.route('/', methods=['GET'])
 def index():
@@ -586,8 +586,8 @@ def eq_iv():
             store
             split
             (combine = automatic)
-
     '''
+
     ip = request.remote_addr
     try:
         user = uh.user_d[ip]
@@ -638,7 +638,7 @@ def eq_iv():
     ret = ret + wb.end
     return ret, 200
 
-@app.route('/equip_<var>')
+@app.route('/equip_item_<var>')
 def equip(var):
     '''
     '''
@@ -650,6 +650,7 @@ def equip(var):
         return redirect('/')
     print(var)
     lst = var.split('_')
+    print(lst)
     user.char.equip.equip_item_slot(lst[0], lst[1])
     user.char.app.update_items()
     user.char.app.draw_char()
@@ -766,14 +767,69 @@ def sell_item(var):
     user.char.equip.sell_item(lst[0], lst[1], lst[2])
     return redirect('/equipment-inventory')
 
-# No caching at all for API endpoints.
-# @app.after_request
-# def add_header(response):
-#     # response.cache_control.no_store = True
-#     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
-#     response.headers['Pragma'] = 'no-cache'
-#     response.headers['Expires'] = '-1'
-#     return response
+@ app.route('/combat')
+def combat():
+    # make sure valid user...
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+        user.char.name
+    except:
+        return redirect('/')
+    wb = WebTemp()
+    ret = wb.start
+    ret = ret + ('<center>' +
+                 '<span style="font-family: Papyrus, fantasy; ' +
+                 'font-size: 30px; font-variant: small-caps;"><b>' +
+                 user.char.name + '</b></span></center>')
+    # Traits and Skills...
+    ret = ret + ('''
+                 <table width="100%">
+                 <tr>
+                     <th width=50%><center><span style="font-family: Papyrus,
+                         fantasy; font-size: 24px; font-variant: small-caps;">
+                         <b>- Armor & Weapons -</b></span></center></th>
+                     <th width=50%><center><span style="font-family: Papyrus,
+                         fantasy; font-size: 24px; font-variant: small-caps;">
+                         <b>- Wounds & Hit Locations -</b></span></center></th>
+                 </tr>
+                 ''') # end headers for stats page
+
+    ret = ret + '</div></div></td></tr>'
+    ret = ret + '<tr><td>' + user.char.combat.weapons()
+    ret = ret + '</td><td>' + user.char.combat.wounds()
+    ret = ret + '</td></tr></table>'  # end table
+    # DONE
+    ret = ret + wb.end
+    return ret, 200
+
+@app.route('/apply_dmg_<var>')
+def apply_damage(var):
+    '''
+    '''
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    a = False;
+    if lst[3] == '1':
+        a = True
+    user.char.wounds = user.char.wounds + Wound().make(int(lst[0]),
+                                                        int(lst[1]),
+                                                        int(lst[2]), a)
+    return redirect('/combat')
+
+@app.route('/heal_dmg_<int:level>')
+def heal_dmg(level):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    user.char.wounds.heal(level)
+    return redirect('/combat')
 
 if __name__ == '__main__':
     app.jinja_env.cache = {}

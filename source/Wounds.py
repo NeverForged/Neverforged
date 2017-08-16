@@ -32,7 +32,7 @@ class Wound(object):
         stun: A list of int/boul objects that determine if the wound is a coma,
                 critical stun, serious stun, moderate stun, light stun, or
                 minor stun
-        
+
         METHODS
         heal(level): Healing based on an int value: 1 = critical, 2 = serious,
                 3 = moderate, 4 = light, 5 = minor.  Healing clears ALL stun
@@ -62,40 +62,40 @@ class Wound(object):
         self.stun = lst_stun
 
 
-    def __repr__(self):
-        '''
-        output the wounds...in a print function
-        '''
-        lst = ['    dead',
-               'critical',
-               ' serious',
-               'moderate',
-               '   light',
-               '   minor',
-               '        ']
-        #       print 'moderate - '
-        ret = ''
-        for i in xrange(6):
-            if self.wounds[i] > 0:
-                ret = ret + lst[i]
-            else:
-                ret = ret + lst[6]
-            if self.stun[i] > 0:
-                ret = ret + '[stun]'
-            else:
-                ret = ret + '      '
-            if len(self.injuries[i]) > 1:
-                ret = ret + " - " + self.injuries[i]
-            ret = ret + "\n"
-        return ret
+    # def __repr__(self):
+    #     '''
+    #     output the wounds...in a print function
+    #     '''
+    #     lst = ['    dead',
+    #            'critical',
+    #            ' serious',
+    #            'moderate',
+    #            '   light',
+    #            '   minor',
+    #            '        ']
+    #     #       print 'moderate - '
+    #     ret = ''
+    #     for i in range(6):
+    #         if self.wounds[i] > 0:
+    #             ret = ret + lst[i]
+    #         else:
+    #             ret = ret + lst[6]
+    #         if self.stun[i] > 0:
+    #             ret = ret + '[stun]'
+    #         else:
+    #             ret = ret + '      '
+    #         if len(self.injuries[i]) > 1:
+    #             ret = ret + " - " + self.injuries[i]
+    #         ret = ret + "\n"
+    #     return ret
 
 
     def __add__(self, new):
         '''
         This adds a 'new' wound to the existing wound 'self'
-        NOT for use in healing (__sub__ covers healing).
+        NOT for use in healing
 
-        recomended that new wound object be a single value of
+        recomended that new wound object be a single
         wound.
 
         Rules:
@@ -103,55 +103,47 @@ class Wound(object):
             stun adds up with lethal
             lethal adds up and replaces stun
         '''
-        temp_wounds = [0, 0, 0, 0, 0, 0]
-        new_wounds = [0, 0, 0, 0, 0, 0]
-        temp_injuries = ['', '', '', '', '', '']
-        temp_stun = [0, 0, 0, 0, 0, 0]
-        new_injuries = ['', '', '', '', '', '']
-        new_stun = [0, 0, 0, 0, 0, 0]
-        stun = 0
-        # all but lethal...
-        # initialize temp_wounds
-        for i in xrange(6):
-            temp_wounds[i] = self.wounds[i]
-            temp_injuries[i] = self.injuries[i]
-            temp_stun[i] = self.stun[i]
-            new_wounds[i] = new.wounds[i]
-            new_injuries[i] = new.injuries[i]
-            new_stun[i] = new.stun[i]
-
-        for i in xrange(5, -1, -1):
-            # print i
-            #is there damage here...
-            if new_wounds[i] >= 1:
-                # we have damage...
-                if temp_wounds[i] == 0: #lands here
-                    temp_wounds[i] = 1
-                    temp_stun[i] = new_stun[i] + stun
-                    if ((len(new_injuries[i]) > 2) and
-                        (new_injuries[i] not in temp_injuries[i]) and
-                        (len(temp_injuries[i]) > 1)):
-                        temp_injuries[i] = (temp_injuries[i] + ", " +
-                                            new_injuries[i])
-                    else:
-                        temp_injuries[i] = new_injuries[i]
-                else:  # already wounded there...
-                    if i > 0:
-                        new_wounds[i-1] = 1
-                        new_injuries[i-1] = new_injuries[i]
-                        new_injuries[i] = ''
-                    if new_stun[i] + stun > 0:
-                        stun = 1
-                    # lethal or stun replacing stun...
-                    if (stun == 0) or (temp_stun[i] == 1):
-                        # lethal... take it up
-                        temp_wounds[i] = 0
-                        temp_stun[i] = 0
-
-        return Wound(temp_wounds,
-                     temp_injuries,
-                     temp_stun)
-
+        wounds = self.wounds
+        stun = self.stun
+        injuries = self.injuries
+        # determine where the new thing is...
+        if 1 in new.wounds:  # lethal
+            idx = new.wounds.index(1)
+            stund = 0
+        elif 1 in new.stun:  # nonlethal
+            idx = new.stun.index(1)
+            stund = 1
+        hold = idx
+        print(idx)
+        actual = 0
+        for i in range(idx, -1, -1):  # don't bother with lesser wounds
+            if hold == i:  # have damage to deal with...
+                if stund == 0:  # add lethal dmg...
+                    if wounds[i] == 1:
+                        wounds[i] = 0
+                        hold = i - 1
+                    elif stun[i] ==  1:
+                        stun[i] = 0
+                        wounds[i] = 0
+                        hold = i - 1
+                    else:  # lands here
+                        wounds[i] = 1
+                        actual = i
+                elif stund == 1:  #stun damage
+                    if wounds[i] == 1:
+                        hold = i - 1
+                    elif stun[i] ==  1:
+                        stun[i] = 0
+                        hold = i - 1
+                    else:  # lands here
+                        stun[i] = 1
+        # injuries...
+        if len(injuries[actual]) >= 1:
+            injuries[actual] = injuries[actual] + '<br>' + ''.join(new.injuries)
+        else:
+            injuries[actual] = ''.join(new.injuries)
+        # done...
+        return Wound(wounds, injuries, stun)
 
     def heal(self, level):
         '''
@@ -170,15 +162,15 @@ class Wound(object):
         temp_wound = Wound()
         self_wounds = self.wounds
         self_injuries = self.injuries
-        self_stun = [0, 0, 0, 0, 0, 0]
-        for i in xrange(1, 6, 1):
+        self_stun = self.stun
+        for i in range(1, 6, 1):
             if (i < level) and (reinjure == 1):
                 # weirdness with same or worse injuries
                 if self_wounds[i] == 1:
                     print("runs for ", i)
                     # injury higher than healing level...
                     self_wounds[i] = 0
-                    for j in xrange(level, i, -1):
+                    for j in range(level, i, -1):
                         print(i, j)
                         if self_wounds[j] == 0:
                             self_wounds[j] = 1
@@ -195,14 +187,13 @@ class Wound(object):
 
         # check injuries...
         injury_clear = 1
-        for i in xrange(6):
+        for i in range(6):
             if (injury_clear == 1) and (self_wounds[i] == 0):
                 self_injuries[i] = ''
             elif self_wounds[i] == 1:
                 # we have or highest left-over wound...
                 injury_clear = 0
-
-        return Wound(self_wounds, self_injuries, self_stun)
+        self = Wound(self_wounds, self_injuries, self_stun)
 
 
     def __getitem__(self, index, injury=False):
@@ -225,41 +216,42 @@ class Wound(object):
         last number of the roll).  Sets the wound object.  Make sure any dmg
         reduction due to armor is already calculated before this object created.
         '''
+        print(dmg, location, fortitude)
         wound = [0, 0, 0, 0, 0, 0]
         injury = ['', '', '', '', '', '']
         stun = [0, 0, 0, 0, 0, 0]
         temp = ''
         actual = 0
-        side = 'right'
+        side = 'left'
         dis = 'Disadvantage'
-        if location % 2 == 0:
-            side = 'left'
+        if location >= 1 and location <= 4:
+            side = 'right'
         #  wound level...
         done = 0
         if dmg >= fortitude:
             wound[1] = 1
             actual = 1
             done = 1
-        elif dmg >= fortitude/2:
+        elif dmg >= int(fortitude/2):
             wound[2] = 1
             actual = 2
             done = 1
-        elif dmg >= fortitude/4:
+        elif dmg >= int(fortitude/4):
             wound[3] = 1
             actual = 3
             done = 1
-        elif dmg >= fortitude/8:
+        elif dmg >= int(fortitude/8):
             wound[4] = 1
             actual = 4
             done = 1
-        elif dmg >= fortitude/16:
+        elif dmg >= int(fortitude/16):
             wound[5] = 1
             actual = 5
             done = 1
         # if less than lowest number, or less than 0, minor stun
         if (done == 0) and (dmg < fortitude/16):
                 nonlethal = True
-                wound[5] = 1
+                wound[5] = 0
                 stun[5] = 1
                 actual = 5
                 done = 1
@@ -292,4 +284,5 @@ class Wound(object):
                 injury[actual] = '{} Mental'.format(dis)
         else:
             stun[actual] = 1
+            wound[actual] = 0
         return Wound(wound, injury, stun)

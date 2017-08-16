@@ -5,6 +5,7 @@ import time
 from Dice import Roll
 from Wounds import Wound
 from Skills import Skills
+from Combat import Combat
 from Database import Database
 from Equipment import Equipment
 import matplotlib.pyplot as plt
@@ -107,6 +108,7 @@ class Character(object):
                              '[&nbsp;&nbsp;][&nbsp;&nbsp;][&nbsp;&nbsp;]',
                              '[&nbsp;&nbsp;][&nbsp;&nbsp;][&nbsp;&nbsp;]']
         self.equip = Equipment(self)
+        self.combat = Combat(self)
 
     def save(self):
         '''
