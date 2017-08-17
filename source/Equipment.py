@@ -43,17 +43,19 @@ class Equipment(object):
                                        'AND loc=\'0\'')
         self.item_nums = ([a[0] for a in self.inventory] +
                           [a[0] for a in self.unsorted])
-        query = ('SELECT _id, slots FROM equipment WHERE {}'
-                 .format(' OR '.join(['_id={}'.format(a) for
-                         a in self.item_nums])))
-        # dictionary of lists of item ids that can go in a slot.
         self.item_locations = defaultdict(list)
-        for a in self.db.query(query):
-            # (id, slots)
-            slots = (a[1].replace('es','|').replace('s','')
-                         .replace('e','').split('|'))
-            for slot in slots:
-                self.item_locations[slot].append(a[0])
+        if len(self.item_nums) >= 1:
+            query = ('SELECT _id, slots FROM equipment WHERE {}'
+                     .format(' OR '.join(['_id={}'.format(a) for
+                             a in self.item_nums])))
+            # dictionary of lists of item ids that can go in a slot.
+
+            for a in self.db.query(query):
+                # (id, slots)
+                slots = (a[1].replace('es','|').replace('s','')
+                             .replace('e','').split('|'))
+                for slot in slots:
+                    self.item_locations[slot].append(a[0])
 
     def display_equipment(self):
         '''
@@ -241,6 +243,8 @@ class Equipment(object):
                  'WHERE PC_inventory.character={}'
                  .format(self.char_id))
         self.wealth = self.db.query(query)[0][0] # money character has
+        if type(self.wealth) != int:
+            self.wealth = 0
         ret = ret + ('<tr><td colspan="2"><center>' +
                      '<i>Wealth &nbsp;&nbsp;' +
                      '<span style="color: #b87333;"><b>{}'
@@ -432,7 +436,11 @@ class Equipment(object):
             add_coins = int(self.wealth / coin[0])
             print(add_coins)
             if add_coins >= 1:
-                self.db.add_item(coin[1], self.char_id, add_coins, ids[0][1])
+                try:
+                    self.db.add_item(coin[1], self.char_id,
+                                     add_coins, ids[0][1])
+                except:
+                    self.db.add_item(coin[1], self.char_id, add_coins, 0)
             # pence will divide evenly, so this should work out fine...
             self.wealth = self.wealth - add_coins*coin[0]
 
@@ -514,7 +522,7 @@ class Equipment(object):
                 maximum of 140% of actual value.
         '''
         # cost and type
-        value = self.db.query('SELECT cost, tags FROM equipment ' +
+        value = self.db.query('SELECT cost/stack, tags FROM equipment ' +
                               'WHERE _id={}'.format(itm_id))[0]
         # Barter Time!
         # lowest of Charisma/Intelligence
@@ -558,4 +566,5 @@ class Equipment(object):
                 per = 0.8
         profit = int(float(value[0]) * float(qt) * per)
         self.delete_allitem(itm_id, loc, qt)
+        print(self.wealth, profit)
         self.give_change(self.wealth + profit)

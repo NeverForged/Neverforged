@@ -414,6 +414,15 @@ class WebTemp(object):
                 cursor: pointer;
             }
 
+                .dropbtn-wa {
+                    min-width: 100%;
+                    max-width: 100%;
+                    padding: 1px;
+                    font-family: Georgia, Times, "Times New Roman", serif;
+                    font-size: 14px;
+                    border: none;
+                    cursor: pointer;
+                }
 
              /* Dropdown Button */
             .dropbtn-wd {
@@ -452,11 +461,11 @@ class WebTemp(object):
             /* Dropdown Content (Hidden by Default) */
             .dropdown-contentwd {
                 display: none;
-                position: relative;
+                position: absolute;
                 font-family: Georgia, Times, "Times New Roman", serif;
                 font-size: 13px;
                 text-align: right;
-                float: left;
+                float: right;
                 box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
                 z-index: 1;
                 background-color: #ffffff;
@@ -503,6 +512,11 @@ class WebTemp(object):
 
             /* Change the background color of the dropdown button when the dropdown content is shown */
             .dropdown:hover .dropbtn {
+                background-color: #3e8e41;
+            }
+
+            /* Change the background color of the dropdown button when the dropdown content is shown */
+            .dropdown:hover .dropbtn-wa {
                 background-color: #3e8e41;
             }
 

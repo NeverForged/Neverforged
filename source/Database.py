@@ -27,7 +27,7 @@ class Database(object):
         '''
         Input some SQL code in query, get the results in a return
         '''
-        # print(query)
+        print(query)
         connection = sqlite3.connect('../sql/' + self.name)
         cursor = connection.cursor()
         cursor.execute(query)

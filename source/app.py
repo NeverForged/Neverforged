@@ -721,6 +721,17 @@ def del_1item(var):
     user.char.equip.delete_1item(lst[0], lst[1])
     return redirect('/equipment-inventory')
 
+@app.route('/com_del_1item_<var>')
+def del_1item_com(var):
+    ip = request.remote_addr
+    try:
+        user = uh.user_d[ip]
+    except:
+        return redirect('/')
+    lst = var.split('_')
+    user.char.equip.delete_1item(lst[0], lst[1])
+    return redirect('/combat')
+
 @app.route('/del_allitem_<var>')
 def del_allitem(var):
     ip = request.remote_addr

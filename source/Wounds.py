@@ -114,7 +114,7 @@ class Wound(object):
             idx = new.stun.index(1)
             stund = 1
         hold = idx
-        print(idx)
+        # print(idx)
         actual = 0
         for i in range(idx, -1, -1):  # don't bother with lesser wounds
             if hold == i:  # have damage to deal with...
@@ -167,19 +167,19 @@ class Wound(object):
             if (i < level) and (reinjure == 1):
                 # weirdness with same or worse injuries
                 if self_wounds[i] == 1:
-                    print("runs for ", i)
+                    # print("runs for ", i)
                     # injury higher than healing level...
                     self_wounds[i] = 0
                     for j in range(level, i, -1):
-                        print(i, j)
+                        # print(i, j)
                         if self_wounds[j] == 0:
                             self_wounds[j] = 1
                         else:
                             self_wounds[j-1] = 1
                             self_wounds[j] = 0
-                        print(self_wounds)
-                    reinjure = 0 # only do this crap once...
-                    print(reinjure)
+                        # print(self_wounds)
+                    reinjure = 0 # only do this once...
+                    # print(reinjure)
             if (i >= level) and (reinjure == 1):
                 # heal all below healing level
                 self_wounds[i] = 0
@@ -216,7 +216,7 @@ class Wound(object):
         last number of the roll).  Sets the wound object.  Make sure any dmg
         reduction due to armor is already calculated before this object created.
         '''
-        print(dmg, location, fortitude)
+        # print(dmg, location, fortitude)
         wound = [0, 0, 0, 0, 0, 0]
         injury = ['', '', '', '', '', '']
         stun = [0, 0, 0, 0, 0, 0]
